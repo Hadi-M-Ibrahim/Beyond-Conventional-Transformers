@@ -10,7 +10,7 @@
 ## 📅 Week 2
 
 - [x] build repo
-- [x] explore relvant work on data and testing (ty Amit)
+- [x] explore relevant work on training and testing (ty Amit)
 - [] implement MXAB (wip -HI)
 - [] train models
 - [] test models
