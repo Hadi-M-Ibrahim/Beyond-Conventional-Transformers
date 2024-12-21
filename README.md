@@ -1,33 +1,29 @@
-
 # Neural Architecture Design and Search [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=A%20new%20collection%20of%20tiny%20and%20efficient%20models%20thru%20architecture%20design%20and%20search,%20SOTA%20performance!!&url=https://github.com/microsoft/Cream&via=houwen_peng&hashtags=NAS,ViT,vision_transformer)
 
-***This is a collection of our NAS and Vision Transformer work***
+**_This is a collection of our NAS and Vision Transformer work_**
 
-> [**TinyCLIP**](./TinyCLIP) (```@ICCV'23```): **TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance**
+> [**TinyCLIP**](./TinyCLIP) (`@ICCV'23`): **TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance**
 
-> [**EfficientViT**](./EfficientViT) (```@CVPR'23```): **EfficientViT: Memory Efficient Vision Transformer with Cascaded Group Attention**
+> [**EfficientViT**](./EfficientViT) (`@CVPR'23`): **EfficientViT: Memory Efficient Vision Transformer with Cascaded Group Attention**
 
-> [**TinyViT**](./TinyViT) (```@ECCV'22```): **TinyViT: Fast Pretraining Distillation for Small Vision Transformers**
+> [**TinyViT**](./TinyViT) (`@ECCV'22`): **TinyViT: Fast Pretraining Distillation for Small Vision Transformers**
 
-> [**MiniViT**](./MiniViT) (```@CVPR'22```): **MiniViT: Compressing Vision Transformers with Weight Multiplexing**
+> [**MiniViT**](./MiniViT) (`@CVPR'22`): **MiniViT: Compressing Vision Transformers with Weight Multiplexing**
 
-> [**CDARTS**](./CDARTS) (```@TPAMI'22```): **Cyclic Differentiable Architecture Search**
+> [**CDARTS**](./CDARTS) (`@TPAMI'22`): **Cyclic Differentiable Architecture Search**
 
+> [**AutoFormerV2**](./AutoFormerV2) (`@NeurIPS'21`): **Searching the Search Space of Vision Transformer**
 
-> [**AutoFormerV2**](./AutoFormerV2) (```@NeurIPS'21```): **Searching the Search Space of Vision Transformer**
+> [**iRPE**](./iRPE) (`@ICCV'21`): **Rethinking and Improving Relative Position Encoding for Vision Transformer**
 
+> [**AutoFormer**](./AutoFormer) (`@ICCV'21`): **AutoFormer: Searching Transformers for Visual Recognition**
 
-> [**iRPE**](./iRPE) (```@ICCV'21```): **Rethinking and Improving Relative Position Encoding for Vision Transformer**
-
-
-> [**AutoFormer**](./AutoFormer) (```@ICCV'21```): **AutoFormer: Searching Transformers for Visual Recognition**
-
-
-> [**Cream**](./Cream) (```@NeurIPS'20```): **Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search**
+> [**Cream**](./Cream) (`@NeurIPS'20`): **Cream of the Crop: Distilling Prioritized Paths For One-Shot Neural Architecture Search**
 
 We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com/microsoft/nni) (Neural Network Intelligence).
 
 ## News
+
 - :sunny: Hiring research interns for next-generation model design, efficient large model inference: houwen.peng@microsoft.com
 - :boom: Sep, 2023: Code for [**TinyCLIP**](./TinyCLIP) is now released.
 - :boom: Jul, 2023: [**TinyCLIP**](./TinyCLIP) accepted to ICCV'23
@@ -51,69 +47,83 @@ We also implemented our NAS algorithms on Microsoft [**NNI**](https://github.com
 ## Works
 
 ### [TinyCLIP](./TinyCLIP)
+
 **TinyCLIP** is a novel **cross-modal distillation** method for large-scale language-image pre-trained models. The method introduces two core techniques: **affinity mimicking** and **weight inheritance**. This work unleashes the capacity of small CLIP models, fully leveraging large-scale models as well as pre-training data and striking the best trade-off between speed and accuracy.
+
 <div align="center">
     <img width="85%" alt="TinyCLIP overview" src="./TinyCLIP/figure/TinyCLIP.jpg"/>
 </div>
 
 ### [EfficientViT](./EfficientViT)
-**EfficientViT** is a family of high-speed vision transformers. It is built with a new memory efficient building block with a **sandwich layout**, and an efficient **cascaded group attention** operation which mitigates attention computation redundancy. 
+
+**EfficientViT** is a family of high-speed vision transformers. It is built with a new memory efficient building block with a **sandwich layout**, and an efficient **cascaded group attention** operation which mitigates attention computation redundancy.
+
 <div align="center">
     <img width="69%" alt="EfficientViT overview" src="./EfficientViT/classification/.figures/efficientvit_main_static.png"/>
 </div>
 
 ### [TinyViT](./TinyViT)
+
 TinyViT is a new family of **tiny and efficient** vision transformers pretrained on **large-scale** datasets with our proposed **fast distillation framework**. The central idea is to **transfer knowledge** from **large pretrained models** to small ones. The logits of large teacher models are sparsified and stored in disk in advance to **save the memory cost and computation overheads**.
+
 <div align="center">
     <img width="80%" alt="TinyViT overview" src="./TinyViT/.figure/framework.png"/>
 </div>
 
 ### [MiniViT](./MiniViT)
+
 MiniViT is a new compression framework that achieves parameter reduction in vision transformers while retaining the same performance. The central idea of MiniViT is to multiplex the weights of consecutive transformer blocks. Specifically, we make the weights shared across layers, while imposing a transformation on the weights to increase diversity. Weight distillation over self-attention is also applied to transfer knowledge from large-scale ViT models to weight-multiplexed compact models.
+
 <div align="center">
     <img width="70%" alt="MiniViT overview" src="./MiniViT/.figure/framework.png"/>
 </div>
 
 ### [CDARTS](./CDARTS)
-In this work, we propose new joint optimization objectives and a novel Cyclic Differentiable ARchiTecture Search framework, dubbed CDARTS. Considering the structure difference, CDARTS builds a cyclic feedback mechanism between the search and evaluation networks with introspective distillation. 
+
+In this work, we propose new joint optimization objectives and a novel Cyclic Differentiable ARchiTecture Search framework, dubbed CDARTS. Considering the structure difference, CDARTS builds a cyclic feedback mechanism between the search and evaluation networks with introspective distillation.
+
 <div align="center">
     <img width="50%" alt="CDARTS overview" src="CDARTS/demo/framework1.png"/>
 </div>
 
-
 ### [AutoFormerV2](./AutoFormerV2)
-In this work, instead of searching the architecture in a predefined search space, with the help of AutoFormer, we proposed to search the search space to automatically find a great search space first. 
+
+In this work, instead of searching the architecture in a predefined search space, with the help of AutoFormer, we proposed to search the search space to automatically find a great search space first.
 After that we search the architectures in the searched space. In addition, we provide insightful observations and guidelines for general vision transformer design.
+
 <div align="center">
     <img width="70%" alt="AutoFormerV2 overview" src="AutoFormerV2/.figure/overview.jpg"/>
 </div>
 
-
 ### [AutoFormer](./AutoFormer)
 
-AutoFormer is new one-shot architecture search framework dedicated to vision transformer search. It entangles the weights of different vision transformer blocks in the same layers during supernet training. 
+AutoFormer is new one-shot architecture search framework dedicated to vision transformer search. It entangles the weights of different vision transformer blocks in the same layers during supernet training.
 Benefiting from the strategy, the trained supernet allows thousands of subnets to be very well-trained. Specifically, the performance of these subnets with weights inherited from the supernet is comparable to those retrained from scratch.
+
 <div align="center">
     <img width="70%" alt="AutoFormer overview" src="AutoFormer/.figure/overview.png"/>
 </div>
 
 ### [iRPE](./iRPE)
+
 **Image RPE (iRPE for short) methods are new relative position encoding methods dedicated to 2D images**, considering directional relative distance modeling as well as the interactions between queries and relative position embeddings in self-attention mechanism. The proposed iRPE methods are simple and lightweight, being easily plugged into transformer blocks. Experiments demonstrate that solely due to the proposed encoding methods, **DeiT and DETR obtain up to 1.5% (top-1 Acc) and 1.3% (mAP) stable improvements** over their original versions on ImageNet and COCO respectively, without tuning any extra hyperparamters such as learning rate and weight decay. Our ablation and analysis also yield interesting findings, some of which run counter to previous understanding.
+
 <div align="center">
     <img width="70%" alt="iRPE overview" src="iRPE/iRPE.png"/>
 </div>
 
-
 ### [Cream](./Cream)
-**[[Paper]](https://papers.nips.cc/paper/2020/file/d072677d210ac4c03ba046120f0802ec-Paper.pdf) [[Models-Google Drive]](https://drive.google.com/drive/folders/1NLGAbBF9bA1IUAxKlk2VjgRXhr6RHvRW?usp=sharing)[[Models-Baidu Disk (password: wqw6)]](https://pan.baidu.com/s/1TqQNm2s14oEdyNPimw3T9g) [[Slides]]() [[BibTex]](https://scholar.googleusercontent.com/scholar.bib?q=info:ICWVXc_SsKAJ:scholar.google.com/&output=citation&scisdr=CgUmooXfEMfTi0cV5aU:AAGBfm0AAAAAX7sQ_aXoamdKRaBI12tAVN8REq1VKNwM&scisig=AAGBfm0AAAAAX7sQ_RdYtp6BSro3zgbXVJU2MCgsG730&scisf=4&ct=citation&cd=-1&hl=ja)**  <br/>
+
+**[[Paper]](https://papers.nips.cc/paper/2020/file/d072677d210ac4c03ba046120f0802ec-Paper.pdf) [[Models-Google Drive]](https://drive.google.com/drive/folders/1NLGAbBF9bA1IUAxKlk2VjgRXhr6RHvRW?usp=sharing)[[Models-Baidu Disk (password: wqw6)]](https://pan.baidu.com/s/1TqQNm2s14oEdyNPimw3T9g) [[Slides]]() [[BibTex]](https://scholar.googleusercontent.com/scholar.bib?q=info:ICWVXc_SsKAJ:scholar.google.com/&output=citation&scisdr=CgUmooXfEMfTi0cV5aU:AAGBfm0AAAAAX7sQ_aXoamdKRaBI12tAVN8REq1VKNwM&scisig=AAGBfm0AAAAAX7sQ_RdYtp6BSro3zgbXVJU2MCgsG730&scisf=4&ct=citation&cd=-1&hl=ja)** <br/>
 
 In this work, we present a simple yet effective architecture distillation method. The central idea is that subnetworks can learn collaboratively and teach each other throughout the training process, aiming to boost the convergence of individual models. We introduce the concept of prioritized path, which refers to the architecture candidates exhibiting superior performance during training. Distilling knowledge from the prioritized paths is able to boost the training of subnetworks. Since the prioritized paths are changed on the fly depending on their performance and complexity, the final obtained paths are the cream of the crop.
+
 <div >
     <img src="Cream/demo/intro.jpg" width="90%"/>
 </div>
 
-
 ## Bibtex
+
 ```bibtex
 @InProceedings{tinyclip,
     title     = {TinyCLIP: CLIP Distillation via Affinity Mimicking and Weight Inheritance},
@@ -189,5 +199,5 @@ In this work, we present a simple yet effective architecture distillation method
 ```
 
 ## License
-License under an MIT license.
 
+License under an MIT license.
