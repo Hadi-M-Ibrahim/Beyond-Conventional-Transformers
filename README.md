@@ -12,7 +12,7 @@
 - [x] build repo
 - [x] explore relevant work on training and testing (ty Amit)
 - [] implement MXAB (wip -HI)
-- [] figure out how to recover a pre-trained model 
+- [] figure out how to recover a pre-trained model
 - [] train models
 - [] test models
 
@@ -20,3 +20,8 @@
 
 - [] finalize citations
 - [] write paper!
+- [] review submission and format guidlines for arXiv
+- [] review submission and format guidlines for medRxiv
+- [] submit paper to preprint server(s)
+- [] review appropriate journals
+- [] sumbit paper to journal(s)
