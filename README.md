@@ -12,6 +12,7 @@
 - [x] build repo
 - [x] explore relevant work on training and testing (ty Amit)
 - [] implement MXAB (wip -HI)
+- [] figure out how to recover a pre-trained model 
 - [] train models
 - [] test models
 
