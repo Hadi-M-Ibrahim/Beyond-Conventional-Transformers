@@ -11,7 +11,7 @@
 
 - [x] build repo
 - [x] explore relevant work on training and testing (ty Amit)
-- [] implement MXAH (wip -HI)
+- [] implement MXA (wip -HI)
 - [] figure out how to recover a pre-trained model (wip -HI)
 - [] train models
 - [] test models
