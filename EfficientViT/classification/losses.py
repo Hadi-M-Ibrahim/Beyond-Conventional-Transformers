@@ -44,7 +44,7 @@ class DistillationLoss(torch.nn.Module):
                              "class_token and the dist_token")
         # don't backprop throught the teacher
         with torch.no_grad():
-            teacher_outputs = self.teacher_model(inputs)
+            teacher_outputs = torch.sigmoid(self.teacher_model(inputs))
 
         if self.distillation_type == 'soft':
             T = self.tau
@@ -53,12 +53,14 @@ class DistillationLoss(torch.nn.Module):
             distillation_loss = F.kl_div(
                 F.log_softmax(outputs_kd / T, dim=1),
                 F.log_softmax(teacher_outputs / T, dim=1),
-                reduction='sum',
+                reduction='batchmean',
                 log_target=True
             ) * (T * T) / outputs_kd.numel()
         elif self.distillation_type == 'hard':
-            distillation_loss = F.cross_entropy(
-                outputs_kd, teacher_outputs.argmax(dim=1))
+            teacher_hard_labels = (teacher_outputs > 0.5).float()
+            distillation_loss = F.binary_cross_entropy_with_logits(outputs_kd, teacher_hard_labels)
+
+
 
         loss = base_loss * (1 - self.alpha) + distillation_loss * self.alpha
         return loss
