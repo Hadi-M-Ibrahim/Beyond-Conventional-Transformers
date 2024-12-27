@@ -3,6 +3,7 @@
 # Copyright (c) 2022 Microsoft
 # Build the EfficientViT Model
 # Written by: Xinyu Liu
+# Modifed to allow for multi-label classification by: Hadi ibrahim
 # --------------------------------------------------------
 import torch
 import torch.nn as nn

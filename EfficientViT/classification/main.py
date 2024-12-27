@@ -317,6 +317,9 @@ def main(args):
 
     lr_scheduler, _ = create_scheduler(args, optimizer)
 
+    criterion = torch.nn.BCEWithLogitsLoss()
+
+    """
     criterion = LabelSmoothingCrossEntropy()
 
     if args.mixup > 0.:
@@ -326,7 +329,7 @@ def main(args):
         criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
     else:
         criterion = torch.nn.CrossEntropyLoss()
-
+    """
     teacher_model = None
     if args.distillation_type != 'none':
         assert args.teacher_path, 'need to specify teacher-path when using distillation'
@@ -352,6 +355,7 @@ def main(args):
     criterion = DistillationLoss(
         criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau
     )
+
 
     output_dir = Path(args.output_dir)
     if args.output_dir and utils.is_main_process():

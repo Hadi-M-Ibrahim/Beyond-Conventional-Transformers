@@ -44,23 +44,18 @@ class DistillationLoss(torch.nn.Module):
                              "class_token and the dist_token")
         # don't backprop throught the teacher
         with torch.no_grad():
-            teacher_outputs = torch.sigmoid(self.teacher_model(inputs))
+            teacher_logits = self.teacher_model(inputs)
+            teacher_probs = torch.sigmoid(teacher_logits)
+
 
         if self.distillation_type == 'soft':
             T = self.tau
-            # taken from https://github.com/peterliht/knowledge-distillation-pytorch/blob/master/model/net.py#L100
-            # with slight modifications
-            distillation_loss = F.kl_div(
-                F.log_softmax(outputs_kd / T, dim=1),
-                F.log_softmax(teacher_outputs / T, dim=1),
-                reduction='batchmean',
-                log_target=True
-            ) * (T * T) / outputs_kd.numel()
+            distillation_loss = F.binary_cross_entropy_with_logits(
+                outputs_kd, teacher_probs
+            )
         elif self.distillation_type == 'hard':
-            teacher_hard_labels = (teacher_outputs > 0.5).float()
+            teacher_hard_labels = (teacher_probs > 0.5).float()
             distillation_loss = F.binary_cross_entropy_with_logits(outputs_kd, teacher_hard_labels)
-
-
 
         loss = base_loss * (1 - self.alpha) + distillation_loss * self.alpha
         return loss
