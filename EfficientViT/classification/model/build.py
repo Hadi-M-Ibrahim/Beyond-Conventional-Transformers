@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .efficientvit import EfficientViT
 from timm.models.registry import register_model
-
+"""
 EfficientViT_m0 = {
         'img_size': 224,
         'patch_size': 16,
@@ -66,6 +66,7 @@ EfficientViT_m5 = {
         'window_size': [7, 7, 7],
         'kernels': [7, 5, 3, 3],
     }
+"""
 EfficientViT_MultiLabel_m0 = {
         'img_size': 224,
         'patch_size': 16,
@@ -131,7 +132,7 @@ EfficientViT_MultiLabel_m5 = {
         'kernels': [7, 5, 3, 3],
         'multi_label': True,
     }
-
+"""
 @register_model
 def EfficientViT_M0(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_m0):
     model = EfficientViT(num_classes=num_classes, distillation=distillation, **model_cfg)
@@ -233,7 +234,7 @@ def EfficientViT_M5(num_classes=1000, pretrained=False, distillation=False, fuse
     if fuse:
         replace_batchnorm(model)
     return model
-
+"""
 @register_model
 def EfficientViT_MultiLabel_M0(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m0):
     model = EfficientViT(num_classes=num_classes, distillation=distillation, **model_cfg)
