@@ -60,6 +60,54 @@ class INatDataset(ImageFolder):
 
     # __getitem__ and __len__ inherited from ImageFolder
 
+class CheXpertDataset(torch.utils.data.Dataset):
+    def __init__(self, root, train=True, transform=None):
+        """
+        Args:
+            root (str): Root directory of the CheXpert dataset.
+            train (bool): Whether to use the training or validation split.
+            transform (callable, optional): A function/transform to apply to the images.
+        """
+        self.root = root
+        self.transform = transform
+        self.train = train
+        self.samples = []
+
+        csv_file = 'train.csv' if train else 'valid.csv'
+        csv_path = os.path.join(root, csv_file)
+
+        with open(csv_path, 'r') as file:
+            lines = file.readlines()[1:]
+            for line in lines:
+                parts = line.strip().split(',')
+                
+                image_path = os.path.join(root, parts[0])
+                
+  
+                label = []
+                for x in parts[5:10]:
+                    if x == '-1': 
+
+                        label.append(0.0)
+                    elif x == '':  
+                        label.append(0.0)
+                    else:
+                        label.append(float(x))
+
+                self.samples.append((image_path, torch.tensor(label)))
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        image_path, label = self.samples[idx]
+        image = default_loader(image_path)
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, label
+
 
 def build_dataset(is_train, args):
     transform = build_transform(is_train, args)
@@ -96,6 +144,10 @@ def build_dataset(is_train, args):
         dataset = INatDataset(args.data_path, train=is_train, year=2019,
                               category=args.inat_category, transform=transform)
         nb_classes = dataset.nb_classes
+    elif args.data_set == 'CHEXPERT':
+        dataset = CheXpertDataset(root=args.data_path,
+                                  train=is_train,transform=transform)
+    nb_classes = 5
     return dataset, nb_classes
 
 

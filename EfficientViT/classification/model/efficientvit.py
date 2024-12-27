@@ -5,6 +5,7 @@
 # Written by: Xinyu Liu
 # --------------------------------------------------------
 import torch
+import torch.nn as nn
 import itertools
 
 from timm.models.vision_transformer import trunc_normal_
@@ -283,7 +284,8 @@ class EfficientViTBlock(torch.nn.Module):
 
 
 class EfficientViT(torch.nn.Module):
-    def __init__(self, img_size=224,
+    def __init__(self, 
+                 img_size=224,
                  patch_size=16,
                  in_chans=3,
                  num_classes=1000,
@@ -295,15 +297,23 @@ class EfficientViT(torch.nn.Module):
                  window_size=[7, 7, 7],
                  kernels=[5, 5, 5, 5],
                  down_ops=[['subsample', 2], ['subsample', 2], ['']],
-                 distillation=False,):
+                 distillation=False,
+                 multi_label=False):
         super().__init__()
 
+        self.multi_label = multi_label
+        
         resolution = img_size
         # Patch embedding
-        self.patch_embed = torch.nn.Sequential(Conv2d_BN(in_chans, embed_dim[0] // 8, 3, 2, 1, resolution=resolution), torch.nn.ReLU(),
-                           Conv2d_BN(embed_dim[0] // 8, embed_dim[0] // 4, 3, 2, 1, resolution=resolution // 2), torch.nn.ReLU(),
-                           Conv2d_BN(embed_dim[0] // 4, embed_dim[0] // 2, 3, 2, 1, resolution=resolution // 4), torch.nn.ReLU(),
-                           Conv2d_BN(embed_dim[0] // 2, embed_dim[0], 3, 2, 1, resolution=resolution // 8))
+        self.patch_embed = torch.nn.Sequential(
+            Conv2d_BN(in_chans, embed_dim[0] // 8, 3, 2, 1, resolution=resolution),
+            torch.nn.ReLU(),
+            Conv2d_BN(embed_dim[0] // 8, embed_dim[0] // 4, 3, 2, 1, resolution=resolution // 2),
+            torch.nn.ReLU(),
+            Conv2d_BN(embed_dim[0] // 4, embed_dim[0] // 2, 3, 2, 1, resolution=resolution // 4),
+            torch.nn.ReLU(),
+            Conv2d_BN(embed_dim[0] // 2, embed_dim[0], 3, 2, 1, resolution=resolution // 8)
+        )
 
         resolution = img_size // patch_size
         attn_ratio = [embed_dim[i] / (key_dim[i] * num_heads[i]) for i in range(len(embed_dim))]
@@ -317,20 +327,22 @@ class EfficientViT(torch.nn.Module):
             for d in range(dpth):
                 eval('self.blocks' + str(i+1)).append(EfficientViTBlock(stg, ed, kd, nh, ar, resolution, wd, kernels))
             if do[0] == 'subsample':
-                # Build EfficientViT downsample block
-                #('Subsample' stride)
                 blk = eval('self.blocks' + str(i+2))
                 resolution_ = (resolution - 1) // do[1] + 1
-                blk.append(torch.nn.Sequential(Residual(Conv2d_BN(embed_dim[i], embed_dim[i], 3, 1, 1, groups=embed_dim[i], resolution=resolution)),
-                                    Residual(FFN(embed_dim[i], int(embed_dim[i] * 2), resolution)),))
+                blk.append(torch.nn.Sequential(
+                    Residual(Conv2d_BN(embed_dim[i], embed_dim[i], 3, 1, 1, groups=embed_dim[i], resolution=resolution)),
+                    Residual(FFN(embed_dim[i], int(embed_dim[i] * 2), resolution))
+                ))
                 blk.append(PatchMerging(*embed_dim[i:i + 2], resolution))
                 resolution = resolution_
-                blk.append(torch.nn.Sequential(Residual(Conv2d_BN(embed_dim[i + 1], embed_dim[i + 1], 3, 1, 1, groups=embed_dim[i + 1], resolution=resolution)),
-                                    Residual(FFN(embed_dim[i + 1], int(embed_dim[i + 1] * 2), resolution)),))
+                blk.append(torch.nn.Sequential(
+                    Residual(Conv2d_BN(embed_dim[i + 1], embed_dim[i + 1], 3, 1, 1, groups=embed_dim[i + 1], resolution=resolution)),
+                    Residual(FFN(embed_dim[i + 1], int(embed_dim[i + 1] * 2), resolution))
+                ))
         self.blocks1 = torch.nn.Sequential(*self.blocks1)
         self.blocks2 = torch.nn.Sequential(*self.blocks2)
         self.blocks3 = torch.nn.Sequential(*self.blocks3)
-        
+
         # Classification head
         self.head = BN_Linear(embed_dim[-1], num_classes) if num_classes > 0 else torch.nn.Identity()
         self.distillation = distillation
@@ -347,10 +359,17 @@ class EfficientViT(torch.nn.Module):
         x = self.blocks2(x)
         x = self.blocks3(x)
         x = torch.nn.functional.adaptive_avg_pool2d(x, 1).flatten(1)
+
         if self.distillation:
-            x = self.head(x), self.head_dist(x)
+            x_cls, x_dist = self.head(x), self.head_dist(x)
             if not self.training:
-                x = (x[0] + x[1]) / 2
+                x_out = (x_cls + x_dist) / 2
+            else:
+                x_out = (x_cls, x_dist)
         else:
-            x = self.head(x)
-        return x
+            x_out = self.head(x)
+
+        if self.multi_label and not isinstance(x_out, tuple):
+            x_out = torch.sigmoid(x_out)
+
+        return x_out
