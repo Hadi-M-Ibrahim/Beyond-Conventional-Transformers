@@ -387,7 +387,7 @@ def main(args):
         print(f"Evaluating model: {args.model}")
         test_stats = evaluate(data_loader_val, model, device)
         print(
-            f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+            f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['accuracy']:.1f}%")
         return
 
     print(f"Start training for {args.epochs} epochs")
@@ -411,7 +411,7 @@ def main(args):
 
         test_stats = evaluate(data_loader_val, model, device)
         print(
-            f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+            f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['accuracy']:.1f}%")
         
         if args.output_dir:
             if epoch % args.save_freq == 0 or epoch == args.epochs - 1:
@@ -429,7 +429,7 @@ def main(args):
                         'args': args,
                     }, checkpoint_path)
 
-        max_accuracy = max(max_accuracy, test_stats["acc1"])
+        max_accuracy = max(max_accuracy, test_stats["accuracy"])
         print(f'Max accuracy: {max_accuracy:.2f}%')
         
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
