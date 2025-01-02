@@ -85,7 +85,7 @@ class CheXpertDataset(torch.utils.data.Dataset):
                 
   
                 label = []
-                for x in parts[5:10]:
+                for x in parts[5:19]:
                     if x == '-1': 
 
                         label.append(0.0)
@@ -147,7 +147,7 @@ def build_dataset(is_train, args):
     elif args.data_set == 'CHEXPERT':
         dataset = CheXpertDataset(root=args.data_path,
                                   train=is_train,transform=transform)
-    nb_classes = 5
+    nb_classes = 14
     return dataset, nb_classes
 
 
