@@ -68,7 +68,6 @@ EfficientViT_m5 = {
     }
 """
 
-#NOTE: distillation is set to turned off for M0 remove after debuging
 EfficientViT_MultiLabel_m0 = {
         'img_size': 224,
         'patch_size': 16,
@@ -88,7 +87,6 @@ EfficientViT_MultiLabel_m1 = {
         'num_heads': [2, 3, 3],
         'window_size': [7, 7, 7],
         'kernels': [7, 5, 3, 3],
-        'distillation' : True,
         'multi_label': True,
     }
 
@@ -100,7 +98,6 @@ EfficientViT_MultiLabel_m2 = {
         'num_heads': [4, 3, 2],
         'window_size': [7, 7, 7],
         'kernels': [7, 5, 3, 3],
-        'distillation' : True,
         'multi_label': True,
     }
 
@@ -111,7 +108,6 @@ EfficientViT_MultiLabel_m3 = {
         'depth': [1, 2, 3],
         'num_heads': [4, 3, 4],
         'window_size': [7, 7, 7],
-        'distillation' : True,
         'multi_label': True,
     }
 
@@ -122,7 +118,6 @@ EfficientViT_MultiLabel_m4 = {
         'depth': [1, 2, 3],
         'num_heads': [4, 4, 4],
         'window_size': [7, 7, 7],
-        'distillation' : True,
         'multi_label': True,
     }
 
@@ -133,7 +128,6 @@ EfficientViT_MultiLabel_m5 = {
         'depth': [1, 3, 4],
         'num_heads': [3, 3, 4],
         'window_size': [7, 7, 7],
-        'distillation' : True,
         'multi_label': True,
     }
 """
@@ -240,7 +234,7 @@ def EfficientViT_M5(num_classes=1000, pretrained=False, distillation=False, fuse
     return model
 """
 @register_model
-def EfficientViT_MultiLabel_M0(num_classes=5, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m0):
+def EfficientViT_MultiLabel_M0(num_classes=5, pretrained=False, distillation=True, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m0):
     model = EfficientViT(num_classes=num_classes, distillation=distillation, **model_cfg)
     if pretrained:
         pretrained = _checkpoint_url_format.format(pretrained)
@@ -258,7 +252,7 @@ def EfficientViT_MultiLabel_M0(num_classes=5, pretrained=False, distillation=Fal
 
 
 @register_model
-def EfficientViT_MultiLabel_M1(num_classes=14, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m1):
+def EfficientViT_MultiLabel_M1(num_classes=14, pretrained=False, distillation=True, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m1):
     model = EfficientViT(num_classes=num_classes, distillation=distillation, **model_cfg)
     if pretrained:
         pretrained = _checkpoint_url_format.format(pretrained)
@@ -276,7 +270,7 @@ def EfficientViT_MultiLabel_M1(num_classes=14, pretrained=False, distillation=Fa
 
 
 @register_model
-def EfficientViT_MultiLabel_M2(num_classes=14, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m2):
+def EfficientViT_MultiLabel_M2(num_classes=14, pretrained=False, distillation=True, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m2):
     model = EfficientViT(num_classes=num_classes, distillation=distillation, **model_cfg)
     if pretrained:
         pretrained = _checkpoint_url_format.format(pretrained)
@@ -294,7 +288,7 @@ def EfficientViT_MultiLabel_M2(num_classes=14, pretrained=False, distillation=Fa
 
 
 @register_model
-def EfficientViT_MultiLabel_M3(num_classes=14, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m3):
+def EfficientViT_MultiLabel_M3(num_classes=14, pretrained=False, distillation=True, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m3):
     model = EfficientViT(num_classes=num_classes, distillation=distillation, **model_cfg)
     if pretrained:
         pretrained = _checkpoint_url_format.format(pretrained)
@@ -312,7 +306,7 @@ def EfficientViT_MultiLabel_M3(num_classes=14, pretrained=False, distillation=Fa
 
 
 @register_model
-def EfficientViT_MultiLabel_M4(num_classes=14, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m4):
+def EfficientViT_MultiLabel_M4(num_classes=14, pretrained=False, distillation=True, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m4):
     model = EfficientViT(num_classes=num_classes, distillation=distillation, **model_cfg)
     if pretrained:
         pretrained = _checkpoint_url_format.format(pretrained)
@@ -330,7 +324,7 @@ def EfficientViT_MultiLabel_M4(num_classes=14, pretrained=False, distillation=Fa
 
 
 @register_model
-def EfficientViT_MultiLabel_M5(num_classes=14, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m5):
+def EfficientViT_MultiLabel_M5(num_classes=14, pretrained=False, distillation=True, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_m5):
     model = EfficientViT(num_classes=num_classes, distillation=distillation, **model_cfg)
     if pretrained:
         pretrained = _checkpoint_url_format.format(pretrained)

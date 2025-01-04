@@ -261,7 +261,7 @@ def main(args):
             mixup_alpha=args.mixup, cutmix_alpha=args.cutmix, cutmix_minmax=args.cutmix_minmax,
             prob=args.mixup_prob, switch_prob=args.mixup_switch_prob, mode=args.mixup_mode,
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
-
+        
     print(f"Creating model: {args.model}")
     model = create_model(
         args.model,
@@ -280,6 +280,7 @@ def main(args):
 
         checkpoint_model = checkpoint['model']
         state_dict = model.state_dict()
+        
         for k in ['head.l.weight', 'head.l.bias',
                   'head_dist.l.weight', 'head_dist.l.bias']:
             if k in checkpoint_model and checkpoint_model[k].shape != state_dict[k].shape:

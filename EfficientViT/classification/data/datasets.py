@@ -88,7 +88,7 @@ class CheXpertDataset(torch.utils.data.Dataset):
                 for x in parts[5:19]:
                     if x == '-1': 
 
-                        label.append(0.0)
+                        label.append(1.0)
                     elif x == '':  
                         label.append(0.0)
                     else:
