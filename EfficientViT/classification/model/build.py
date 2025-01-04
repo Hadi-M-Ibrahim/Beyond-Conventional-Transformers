@@ -68,7 +68,6 @@ EfficientViT_m5 = {
     }
 """
 
-#NOTE: distillation is set to turned off for M0 remove after debuging
 EfficientViT_MultiLabel_m0 = {
         'img_size': 224,
         'patch_size': 16,
@@ -88,7 +87,6 @@ EfficientViT_MultiLabel_m1 = {
         'num_heads': [2, 3, 3],
         'window_size': [7, 7, 7],
         'kernels': [7, 5, 3, 3],
-        'distillation' : True,
         'multi_label': True,
     }
 
@@ -100,7 +98,6 @@ EfficientViT_MultiLabel_m2 = {
         'num_heads': [4, 3, 2],
         'window_size': [7, 7, 7],
         'kernels': [7, 5, 3, 3],
-        'distillation' : True,
         'multi_label': True,
     }
 
@@ -111,7 +108,6 @@ EfficientViT_MultiLabel_m3 = {
         'depth': [1, 2, 3],
         'num_heads': [4, 3, 4],
         'window_size': [7, 7, 7],
-        'distillation' : True,
         'multi_label': True,
     }
 
@@ -122,7 +118,6 @@ EfficientViT_MultiLabel_m4 = {
         'depth': [1, 2, 3],
         'num_heads': [4, 4, 4],
         'window_size': [7, 7, 7],
-        'distillation' : True,
         'multi_label': True,
     }
 
@@ -133,7 +128,6 @@ EfficientViT_MultiLabel_m5 = {
         'depth': [1, 3, 4],
         'num_heads': [3, 3, 4],
         'window_size': [7, 7, 7],
-        'distillation' : True,
         'multi_label': True,
     }
 """
