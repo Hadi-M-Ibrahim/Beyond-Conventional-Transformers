@@ -1,5 +1,5 @@
 """
-Train and eval functions used in main.py
+Train, eval, teacher-load functions used in main.py
 """
 import math
 import sys
@@ -12,6 +12,28 @@ from timm.utils import ModelEma
 
 from losses import DistillationLoss
 import utils
+
+import torchvision.models as models
+
+
+def load_custom_teacher_model(teacher_path):
+    teacher_model = models.densenet121(pretrained=False)
+    
+    checkpoint = torch.load(teacher_path, map_location="cpu")
+
+    if "model" in checkpoint:
+        checkpoint = checkpoint["model"]
+
+    state_dict = {k: v for k, v in checkpoint.items() if k in teacher_model.state_dict()}
+    
+    missing_keys, unexpected_keys = teacher_model.load_state_dict(state_dict, strict=False)
+
+    if missing_keys:
+        print(f"Missing keys: {missing_keys}")
+    if unexpected_keys:
+        print(f"Unexpected keys: {unexpected_keys}")
+
+    return teacher_model
 
 def set_bn_state(model):
     for m in model.modules():

@@ -26,7 +26,7 @@ from timm.utils import NativeScaler, get_state_dict, ModelEma
 from data.samplers import RASampler
 from data.datasets import build_dataset
 from data.threeaugment import new_data_aug_generator
-from engine import train_one_epoch, evaluate
+from engine import train_one_epoch, evaluate, load_custom_teacher_model
 from losses import DistillationLoss
 
 from model import build
@@ -331,24 +331,19 @@ def main(args):
     else:
         criterion = torch.nn.CrossEntropyLoss()
     """
+
     teacher_model = None
     if args.distillation_type != 'none':
-        assert args.teacher_path, 'need to specify teacher-path when using distillation'
-        print(f"Creating teacher model: {args.teacher_model}")
-        teacher_model = create_model(
-            args.teacher_model,
-            pretrained=False,
-            num_classes=args.nb_classes,
-            global_pool='avg',
-        )
-        if args.teacher_path.startswith('https'):
-            checkpoint = torch.hub.load_state_dict_from_url(
-                args.teacher_path, map_location='cpu', check_hash=True)
-        else:
-            checkpoint = torch.load(args.teacher_path, map_location='cpu')
-        teacher_model.load_state_dict(checkpoint['model'])
-        teacher_model.to(device)
-        teacher_model.eval()
+        print(f"Creating teacher model using torchxrayvision: {args.teacher_model}")
+    
+    if args.teacher_model == 'densenet121':
+        teacher_model = load_custom_teacher_model(args.teacher_path)
+    else:
+        raise ValueError(f"Unsupported teacher model: {args.teacher_model} Supported teacher models are: densenet121")
+
+    teacher_model.to(device)
+    teacher_model.eval()
+
 
     # wrap the criterion in our custom DistillationLoss, which
     # just dispatches to the original criterion if args.distillation_type is
