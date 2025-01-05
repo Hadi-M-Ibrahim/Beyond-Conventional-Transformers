@@ -303,10 +303,11 @@ class MedicalXRayAttention(nn.Module):
             else:
                 x_cropped = x[i, :, :, :]
 
+            x_cropped = x_cropped.unsqueeze(0)
             x_resized = F.interpolate(x_cropped, size=(H, W), mode='bilinear', align_corners=False)
             x_pooled.append(x_resized)
         
-        x = torch.stack(x_pooled, dim=0)
+        x = torch.cat(x_pooled, dim=0)
 
         ca_weights = self.channel_attention(x)
         x = x * ca_weights

@@ -17,7 +17,7 @@ import torchvision.models as models
 
 
 def load_custom_teacher_model(teacher_path):
-    teacher_model = models.densenet121(pretrained=False)
+    teacher_model = models.densenet121(pretrained=False, num_classes=14)
     
     checkpoint = torch.load(teacher_path, map_location="cpu")
 
