@@ -3,10 +3,11 @@
 # Copyright (c) 2022 Microsoft
 # Build the EfficientViT Model
 # Written by: Xinyu Liu
-# Modifed to allow for multi-label classification by: Hadi ibrahim
+# Modifed to allow for multi-label classification & MXA by: Hadi ibrahim
 # --------------------------------------------------------
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import itertools
 
 from timm.models.vision_transformer import trunc_normal_
@@ -248,6 +249,76 @@ class LocalWindowAttention(torch.nn.Module):
             x = x.permute(0, 3, 1, 2)
         return x
 
+class MedicalXRayAttention(nn.Module):
+    """
+    Medical X-Ray Attention (MXA) Module with dynamic ROI selection and CBAM-like attention.
+    """
+    def __init__(self, in_channels, reduction=16):
+        super(MedicalXRayAttention, self).__init__()
+        self.in_channels = in_channels
+        self.reduction = reduction
+
+        self.roi_predictor = nn.Sequential(
+            nn.Conv2d(in_channels, in_channels // 2, kernel_size=3, padding=1, bias=False),
+            nn.ReLU(),
+            nn.Conv2d(in_channels // 2, 4, kernel_size=1, bias=True),
+            nn.Sigmoid()
+        )
+
+        self.channel_attention = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),  
+            nn.Conv2d(in_channels, in_channels // reduction, kernel_size=1, bias=False),
+            nn.ReLU(),
+            nn.Conv2d(in_channels // reduction, in_channels, kernel_size=1, bias=False),
+            nn.Sigmoid()
+        )
+
+        self.spatial_attention = nn.Sequential(
+            nn.Conv2d(2, 1, kernel_size=7, stride=1, padding=3, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        """
+        Forward pass for MXA with dynamic ROI selection.
+        :param x: Input tensor of shape (B, C, H, W)
+        :return: Attention-weighted output.
+        """
+        B, C, H, W = x.shape
+
+        roi_coords = self.roi_predictor(x)  
+        roi_coords = roi_coords.mean(dim=(2, 3))
+        
+        x_pooled = []
+        for i in range(B):
+            x1, y1, x2, y2 = roi_coords[i]
+            x1, y1, x2, y2 = int(x1 * W), int(y1 * H), int(x2 * W), int(y2 * H)  
+
+            x1, y1 = max(0, x1), max(0, y1)
+            x2, y2 = min(W, x2), min(H, y2)
+
+
+            if x2 > x1 and y2 > y1:
+                x_cropped = x[i, :, y1:y2, x1:x2]
+            else:
+                x_cropped = x[i, :, :, :]
+
+            x_resized = F.interpolate(x_cropped, size=(H, W), mode='bilinear', align_corners=False)
+            x_pooled.append(x_resized)
+        
+        x = torch.stack(x_pooled, dim=0)
+
+        ca_weights = self.channel_attention(x)
+        x = x * ca_weights
+
+        max_pool = torch.max(x, dim=1, keepdim=True)[0]
+        avg_pool = torch.mean(x, dim=1, keepdim=True)
+        sa_input = torch.cat([max_pool, avg_pool], dim=1)
+        sa_weights = self.spatial_attention(sa_input)
+        x = x * sa_weights
+
+        return x
+
 
 class EfficientViTBlock(torch.nn.Module):    
     """ A basic EfficientViT building block.
@@ -276,15 +347,23 @@ class EfficientViTBlock(torch.nn.Module):
         if type == 's':
             self.mixer = Residual(LocalWindowAttention(ed, kd, nh, attn_ratio=ar, \
                     resolution=resolution, window_resolution=window_resolution, kernels=kernels))
+            
+            self.mxa = Residual(MedicalXRayAttention(in_channels=ed))
                 
         self.dw1 = Residual(Conv2d_BN(ed, ed, 3, 1, 1, groups=ed, bn_weight_init=0., resolution=resolution))
         self.ffn1 = Residual(FFN(ed, int(ed * 2), resolution))
 
     def forward(self, x):
+        mixer_out = self.mixer(x)
+        mxa_out = self.mxa(x)
+
+        x = mixer_out + mxa_out
         return self.ffn1(self.dw1(self.mixer(self.ffn0(self.dw0(x)))))
 
 
+
 class EfficientViT(torch.nn.Module):
+
     def __init__(self, 
                  img_size=224,
                  patch_size=16,
