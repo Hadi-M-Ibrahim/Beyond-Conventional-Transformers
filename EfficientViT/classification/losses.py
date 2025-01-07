@@ -3,6 +3,7 @@ Implements the knowledge distillation loss, proposed in deit
 """
 import torch
 from torch.nn import functional as F
+import torch.nn as nn
 
 
 class DistillationLoss(torch.nn.Module):
@@ -12,14 +13,15 @@ class DistillationLoss(torch.nn.Module):
     """
 
     def __init__(self, base_criterion: torch.nn.Module, teacher_model: torch.nn.Module,
-                 distillation_type: str, alpha: float, tau: float):
+                 distillation_type: str, alpha: float, tau: float):  
         super().__init__()
         self.base_criterion = base_criterion
         self.teacher_model = teacher_model
         assert distillation_type in ['none', 'soft', 'hard']
         self.distillation_type = distillation_type
-        self.alpha = alpha
+        self.alpha = nn.Paramater(torch.tensor(alpha)) 
         self.tau = tau
+        self.i = 0
 
     def forward(self, inputs, outputs, labels):
         """
@@ -57,5 +59,14 @@ class DistillationLoss(torch.nn.Module):
             teacher_hard_labels = (teacher_probs > 0.5).float()
             distillation_loss = F.binary_cross_entropy_with_logits(outputs_kd, teacher_hard_labels)
 
+        alpha = torch.sigmoid(self.alpha) # added
+        self.i +=1
+
         loss = base_loss * (1 - self.alpha) + distillation_loss * self.alpha
+
+        if self.i % 1000 == 0:
+            print(f"Alpha: {alpha}")
+            print(f"Old Loss: {base_loss + distillation_loss}")
+            print(f"New Loss: {loss}")
+            
         return loss
