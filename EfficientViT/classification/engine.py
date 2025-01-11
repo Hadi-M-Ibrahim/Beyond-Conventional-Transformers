@@ -14,7 +14,7 @@ from losses import DistillationLoss
 import utils
 
 import torchvision.models as models
-
+from model.efficientvit import MedicalXRayAttention
 
 def load_custom_teacher_model(teacher_path):
     teacher_model = models.densenet121(pretrained=False, num_classes=14)
@@ -89,8 +89,23 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         if model_ema is not None:
             model_ema.update(model)
 
-        metric_logger.update(loss=loss_value)
-        metric_logger.update(lr=optimizer.param_groups[0]["lr"])
+    with torch.no_grad():
+        for name, module in model.named_modules():
+            if isinstance(module, MedicalXRayAttention) and module.last_roi_coords is not None:
+                roi_coords = module.last_roi_coords  
+                coord_names = ['x1', 'y1', 'x2', 'y2']
+                stats = {}
+            for idx, coord_name in enumerate(coord_names):
+                coord = roi_coords[:, idx]
+                stats[f'{coord_name}_min'] = coord.min().item()
+                stats[f'{coord_name}_mean'] = coord.mean().item()
+                stats[f'{coord_name}_max'] = coord.max().item()
+            print(f"Module {name} ROI Stats - " +
+                  ", ".join(f"{k}: {v:.2f}" for k, v in stats.items()))
+
+
+    metric_logger.update(loss=loss_value)
+    metric_logger.update(lr=optimizer.param_groups[0]["lr"])
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)

@@ -19,7 +19,7 @@ class DistillationLoss(torch.nn.Module):
         self.teacher_model = teacher_model
         assert distillation_type in ['none', 'soft', 'hard']
         self.distillation_type = distillation_type
-        self.alpha = nn.Paramater(torch.tensor(alpha)) 
+        self.alpha = nn.Parameter(torch.tensor(alpha)) 
         self.tau = tau
         self.i = 0
 
