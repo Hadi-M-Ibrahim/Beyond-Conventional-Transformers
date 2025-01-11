@@ -278,10 +278,6 @@ class MedicalXRayAttention(nn.Module):
             nn.Sigmoid()
         )
 
-        self.last_roi_coords = None
-
-
-
     def forward(self, x):
         """
         Forward pass for MXA with dynamic ROI selection.
@@ -293,7 +289,6 @@ class MedicalXRayAttention(nn.Module):
         
         roi_map = self.roi_predictor(x) 
         roi_coords = roi_map.mean(dim=(2, 3))
-        self.last_roi_coords = roi_coords.detach().cpu()
         
         x_pooled = []
         for i in range(B):
