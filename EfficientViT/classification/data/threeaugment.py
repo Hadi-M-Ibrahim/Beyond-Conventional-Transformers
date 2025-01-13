@@ -45,7 +45,7 @@ class Solarization(object):
     """
     Apply Solarization to the PIL image.
     """
-    def __init__(self, p=0.1):
+    def __init__(self, p=0.3):
         self.p = p
 
     def __call__(self, img):
@@ -84,7 +84,7 @@ def new_data_aug_generator(is_train, args = None):
         ]
 
         secondary_tfl = [ElasticTransform(p=1),
-                        Solarization(p=.1),
+                        Solarization(p=.3),
                         GaussianBlur(p=.3)
                         ]
 
