@@ -89,8 +89,62 @@ class ColorJitter(object):
             return self.transf(img)
         else:
             return img
+        
+class RandomPerspective(object):
+    def __init__(self, p=.5):
+        self.p = p
+        self.transf = v2.RandomPerspective()
+ 
+    def __call__(self, img):
+        if random.random() < self.p:
+            return self.transf(img)
+        else:
+            return img
 
-   
+class RandomRotation(object):
+    def __init__(self, p=.8):
+        self.p = p
+        self.transf = v2.RandomRotation((-5,5))
+ 
+    def __call__(self, img):
+        if random.random() < self.p:
+            return self.transf(img)
+        else:
+            return img      
+
+class JPEG(object):
+    def __init__(self, p=.5):
+        self.p = p
+        self.transf = v2.JPEG(random.randint(1, 100))
+ 
+    def __call__(self, img):
+        if random.random() < self.p:
+            return self.transf(img)
+        else:
+            return img  
+            
+class VerticalFlip(object):
+    def __init__(self, p=.3):
+        self.p = p
+        self.transf = v2.RandomVerticalFlip(p=1)
+ 
+    def __call__(self, img):
+        if random.random() < self.p:
+            return self.transf(img)
+        else:
+            return img      
+                
+class HorizontalFlip(object):
+    def __init__(self, p=.3):
+        self.p = p
+        self.transf = v2.RandomHorizontalFlip(p=1)
+ 
+    def __call__(self, img):
+        if random.random() < self.p:
+            return self.transf(img)
+        else:
+            return img
+        
 def new_data_aug_generator(is_train, args = None):
     img_size = 224
     mean, std = [0.5031732320785522,0.5031732320785522 , 0.5031732320785522], [ 0.28851956129074097,0.28851956129074097,0.28851956129074097]
@@ -109,6 +163,11 @@ def new_data_aug_generator(is_train, args = None):
                         Solarization(p=.3),
                         GaussianBlur(p=.3),
                         ColorJitter(p=1),
+                        RandomPerspective(p=.5),
+                        RandomRotation(p=.8),
+                        JPEG(p=.5),
+                        VerticalFlip(p=.3),
+                        HorizontalFlip(p=.3)
                         ]
 
 
