@@ -353,12 +353,14 @@ class EfficientViTBlock(torch.nn.Module):
                 
         self.dw1 = Residual(Conv2d_BN(ed, ed, 3, 1, 1, groups=ed, bn_weight_init=0., resolution=resolution))
         self.ffn1 = Residual(FFN(ed, int(ed * 2), resolution))
+        self.alpha = nn.Parameter(torch.tensor(0.5))
 
     def forward(self, x):
         mixer_out = self.mixer(x)
         mxa_out = self.mxa(x)
 
-        x = mixer_out + mxa_out
+        alpha = torch.sigmoid(self.alpha) # added
+        x = alpha * mixer_out + (1-alpha) * mxa_out        
         return self.ffn1(self.dw1(self.mixer(self.ffn0(self.dw0(x)))))
 
 

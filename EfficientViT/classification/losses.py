@@ -3,7 +3,7 @@ Implements the knowledge distillation loss, proposed in deit
 """
 import torch
 from torch.nn import functional as F
-
+import torch.nn as nn
 
 class DistillationLoss(torch.nn.Module):
     """
@@ -18,7 +18,7 @@ class DistillationLoss(torch.nn.Module):
         self.teacher_model = teacher_model
         assert distillation_type in ['none', 'soft', 'hard']
         self.distillation_type = distillation_type
-        self.alpha = alpha
+        self.alpha = nn.Parameter(torch.tensor(alpha))
         self.tau = tau
 
     def forward(self, inputs, outputs, labels):
