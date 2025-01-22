@@ -32,6 +32,7 @@ from losses import DistillationLoss
 from model import build
 import utils
 
+import torch_xla.core.xla_model as xm
 
 def get_args_parser():
     parser = argparse.ArgumentParser(
@@ -198,7 +199,7 @@ def main(args):
         raise NotImplementedError(
             "Finetuning with distillation not yet supported")
 
-    device = torch.device(args.device)
+    device = xm.xla_device()
 
     # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
