@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Export GCSFUSE repository
+export GCSFUSE_REPO=gcsfuse-$(lsb_release -c -s)
+
+# Add the GCSFUSE repository to sources list
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.asc] https://packages.cloud.google.com/apt $GCSFUSE_REPO main" | sudo tee /etc/apt/sources.list.d/gcsfuse.list
+
+# Download and save Google Cloud's apt key
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo tee /usr/share/keyrings/cloud.google.asc
+
+# Update the package list and install GCSFUSE
+sudo apt-get update
+sudo apt-get install -y gcsfuse
+
+# Create a directory for mounting the GCS bucket
+mkdir -p /home/hadimajedibrahim/MXA
+
+# Mount the GCS bucket
+gcsfuse mxa-data /home/hadimajedibrahim/MXA
+
+# Navigate to the repository directory
+cd /home/hadimajedibrahim/Cream
+
+# Install required Python dependencies
+pip install -r requirements.txt
+pip install torch~=2.4.0 torch_xla[tpu]~=2.4.0 torchvision -f https://storage.googleapis.com/libtpu-releases/index.html
+
+# Set the PJRT device to TPU
+export PJRT_DEVICE=TPU
+
