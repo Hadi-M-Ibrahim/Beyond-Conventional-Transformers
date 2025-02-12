@@ -1,0 +1,12 @@
+{"train_lr": 1.0000000000000095e-06, "train_loss": 0.9143150102928144, "test_loss": 0.8618656396865845, "test_accuracy": 0.21092796092796093, "epoch": 0, "n_parameters": 16149442}
+{"train_lr": 1.0000000000000095e-06, "train_loss": 0.9124938356220176, "test_loss": 0.8486219048500061, "test_accuracy": 0.21092796092796093, "epoch": 1, "n_parameters": 16149442}
+{"train_lr": 0.00020080000000000073, "train_loss": 0.7297064879345238, "test_loss": 0.6936640739440918, "test_accuracy": 0.21092796092796093, "epoch": 2, "n_parameters": 16149442}
+{"train_lr": 0.0004006000000000009, "train_loss": 0.6957349215352208, "test_loss": 0.6923899054527283, "test_accuracy": 0.442002442002442, "epoch": 3, "n_parameters": 16149442}
+{"train_lr": 0.0006004000000000008, "train_loss": 0.6929296524426259, "test_loss": 0.6911160945892334, "test_accuracy": 0.739010989010989, "epoch": 4, "n_parameters": 16149442}
+{"train_lr": 0.000800199999999993, "train_loss": 0.6917490937294216, "test_loss": 0.6909630298614502, "test_accuracy": 0.7887667887667887, "epoch": 5, "n_parameters": 16149442}
+{"train_lr": 0.0009757729755661096, "train_loss": 0.6913841741347532, "test_loss": 0.690274715423584, "test_accuracy": 0.8061660561660562, "epoch": 6, "n_parameters": 16149442}
+{"train_lr": 0.0009652393605146812, "train_loss": 0.690974467117852, "test_loss": 0.6916931867599487, "test_accuracy": 0.811965811965812, "epoch": 7, "n_parameters": 16149442}
+{"train_lr": 0.0009528893909706729, "train_loss": 0.6906931599892607, "test_loss": 0.6893929839134216, "test_accuracy": 0.8076923076923077, "epoch": 8, "n_parameters": 16149442}
+{"train_lr": 0.0009387718066217176, "train_loss": 0.6902775976362578, "test_loss": 0.692023754119873, "test_accuracy": 0.8073870573870574, "epoch": 9, "n_parameters": 16149442}
+{"train_lr": 0.0009229423231235058, "train_loss": 0.6898751632062667, "test_loss": 0.6886153221130371, "test_accuracy": 0.8183760683760684, "epoch": 10, "n_parameters": 16149442}
+{"train_lr": 0.0009054634122155938, "train_loss": 0.689557320070923, "test_loss": 0.6869553923606873, "test_accuracy": 0.8168498168498168, "epoch": 11, "n_parameters": 16149442}

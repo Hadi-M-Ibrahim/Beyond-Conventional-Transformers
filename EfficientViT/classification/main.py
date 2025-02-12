@@ -32,6 +32,8 @@ from losses import DistillationLoss
 from model import build
 import utils
 
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+
 
 def get_args_parser():
     parser = argparse.ArgumentParser(
@@ -316,7 +318,16 @@ def main(args):
     optimizer = create_optimizer(args, model_without_ddp)
     loss_scaler = NativeScaler()
 
-    lr_scheduler, _ = create_scheduler(args, optimizer)
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode='max',  # 'max' because we want to maximize validation accuracy
+    factor=args.decay_rate,  # decay rate (default 0.1)
+    patience=args.patience_epochs,  # number of epochs to wait before reducing LR
+    threshold=0.0001,  # minimal improvement to continue
+    min_lr=args.min_lr,  # lower bound for LR
+    verbose=True  # print messages when LR is reduced
+    )
+
 
     criterion = torch.nn.BCEWithLogitsLoss()
 
@@ -381,7 +392,7 @@ def main(args):
     if args.eval:
         # utils.replace_batchnorm(model) # Users may choose whether to merge Conv-BN layers during eval
         print(f"Evaluating model: {args.model}")
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate(data_loader_val, model, device, val_loader=data_loader_val)
         print(
             f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['accuracy']:.1f}%")
         return
@@ -403,9 +414,9 @@ def main(args):
             set_bn_eval=args.set_bn_eval, # set bn to eval if finetune
         )
 
-        lr_scheduler.step(epoch)
+        lr_scheduler.step(test_stats['accuracy'])            
 
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate(data_loader_val, model, device, val_loader=data_loader_val)
         print(
             f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['accuracy']:.1f}%")
         

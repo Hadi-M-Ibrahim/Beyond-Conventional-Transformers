@@ -1,0 +1,849 @@
+EfficientViT(
+  (patch_embed): Sequential(
+    (0): Conv2d_BN(
+      (c): Conv2d(3, 24, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+      (bn): BatchNorm2d(24, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (1): ELU(alpha=1.0)
+    (2): Conv2d_BN(
+      (c): Conv2d(24, 48, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+      (bn): BatchNorm2d(48, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (3): ELU(alpha=1.0)
+    (4): Conv2d_BN(
+      (c): Conv2d(48, 96, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+      (bn): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (5): ELU(alpha=1.0)
+    (6): Conv2d_BN(
+      (c): Conv2d(96, 192, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+      (bn): BatchNorm2d(192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+  )
+  (blocks1): Sequential(
+    (0): EfficientViTBlock(
+      (dw0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(192, 192, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=192, bias=False)
+          (bn): BatchNorm2d(192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn0): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(192, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(384, 192, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+      (mixer): Residual(
+        (m): LocalWindowAttention(
+          (attn): CascadedGroupAttention(
+            (qkvs): ModuleList(
+              (0-2): 3 x Conv2d_BN(
+                (c): Conv2d(64, 96, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (dws): ModuleList(
+              (0-2): 3 x Conv2d_BN(
+                (c): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16, bias=False)
+                (bn): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (proj): Sequential(
+              (0): ELU(alpha=1.0)
+              (1): Conv2d_BN(
+                (c): Conv2d(192, 192, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+          )
+        )
+      )
+      (mxa): Residual(
+        (m): MedicalXRayAttention(
+          (roi_predictor): Sequential(
+            (0): Conv2d(192, 96, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (1): ELU(alpha=1.0)
+            (2): Conv2d(96, 4, kernel_size=(1, 1), stride=(1, 1))
+            (3): Sigmoid()
+          )
+          (channel_attention): Sequential(
+            (0): AdaptiveAvgPool2d(output_size=1)
+            (1): Conv2d(192, 12, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (2): ELU(alpha=1.0)
+            (3): Conv2d(12, 192, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (4): Sigmoid()
+          )
+          (spatial_attention): Sequential(
+            (0): Conv2d(2, 1, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), bias=False)
+            (1): Sigmoid()
+          )
+        )
+      )
+      (dw1): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(192, 192, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=192, bias=False)
+          (bn): BatchNorm2d(192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(192, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(384, 192, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+  )
+  (blocks2): Sequential(
+    (0): Sequential(
+      (0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(192, 192, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=192, bias=False)
+          (bn): BatchNorm2d(192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(192, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(384, 192, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(192, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+    (1): PatchMerging(
+      (conv1): Conv2d_BN(
+        (c): Conv2d(192, 768, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (act): ELU(alpha=1.0)
+      (conv2): Conv2d_BN(
+        (c): Conv2d(768, 768, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), groups=768, bias=False)
+        (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (se): SEModule(
+        (fc1): Conv2d(768, 192, kernel_size=(1, 1), stride=(1, 1))
+        (bn): Identity()
+        (act): ReLU(inplace=True)
+        (fc2): Conv2d(192, 768, kernel_size=(1, 1), stride=(1, 1))
+        (gate): Sigmoid()
+      )
+      (conv3): Conv2d_BN(
+        (c): Conv2d(768, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (2): Sequential(
+      (0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(288, 288, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=288, bias=False)
+          (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(288, 576, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(576, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(576, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+    (3): EfficientViTBlock(
+      (dw0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(288, 288, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=288, bias=False)
+          (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn0): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(288, 576, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(576, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(576, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+      (mixer): Residual(
+        (m): LocalWindowAttention(
+          (attn): CascadedGroupAttention(
+            (qkvs): ModuleList(
+              (0-2): 3 x Conv2d_BN(
+                (c): Conv2d(96, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (dws): ModuleList(
+              (0-2): 3 x Conv2d_BN(
+                (c): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16, bias=False)
+                (bn): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (proj): Sequential(
+              (0): ELU(alpha=1.0)
+              (1): Conv2d_BN(
+                (c): Conv2d(288, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+          )
+        )
+      )
+      (mxa): Residual(
+        (m): MedicalXRayAttention(
+          (roi_predictor): Sequential(
+            (0): Conv2d(288, 144, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (1): ELU(alpha=1.0)
+            (2): Conv2d(144, 4, kernel_size=(1, 1), stride=(1, 1))
+            (3): Sigmoid()
+          )
+          (channel_attention): Sequential(
+            (0): AdaptiveAvgPool2d(output_size=1)
+            (1): Conv2d(288, 18, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (2): ELU(alpha=1.0)
+            (3): Conv2d(18, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (4): Sigmoid()
+          )
+          (spatial_attention): Sequential(
+            (0): Conv2d(2, 1, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), bias=False)
+            (1): Sigmoid()
+          )
+        )
+      )
+      (dw1): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(288, 288, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=288, bias=False)
+          (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(288, 576, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(576, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(576, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+    (4): EfficientViTBlock(
+      (dw0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(288, 288, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=288, bias=False)
+          (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn0): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(288, 576, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(576, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(576, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+      (mixer): Residual(
+        (m): LocalWindowAttention(
+          (attn): CascadedGroupAttention(
+            (qkvs): ModuleList(
+              (0-2): 3 x Conv2d_BN(
+                (c): Conv2d(96, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (dws): ModuleList(
+              (0-2): 3 x Conv2d_BN(
+                (c): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16, bias=False)
+                (bn): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (proj): Sequential(
+              (0): ELU(alpha=1.0)
+              (1): Conv2d_BN(
+                (c): Conv2d(288, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+          )
+        )
+      )
+      (mxa): Residual(
+        (m): MedicalXRayAttention(
+          (roi_predictor): Sequential(
+            (0): Conv2d(288, 144, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (1): ELU(alpha=1.0)
+            (2): Conv2d(144, 4, kernel_size=(1, 1), stride=(1, 1))
+            (3): Sigmoid()
+          )
+          (channel_attention): Sequential(
+            (0): AdaptiveAvgPool2d(output_size=1)
+            (1): Conv2d(288, 18, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (2): ELU(alpha=1.0)
+            (3): Conv2d(18, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (4): Sigmoid()
+          )
+          (spatial_attention): Sequential(
+            (0): Conv2d(2, 1, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), bias=False)
+            (1): Sigmoid()
+          )
+        )
+      )
+      (dw1): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(288, 288, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=288, bias=False)
+          (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(288, 576, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(576, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(576, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+    (5): EfficientViTBlock(
+      (dw0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(288, 288, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=288, bias=False)
+          (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn0): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(288, 576, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(576, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(576, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+      (mixer): Residual(
+        (m): LocalWindowAttention(
+          (attn): CascadedGroupAttention(
+            (qkvs): ModuleList(
+              (0-2): 3 x Conv2d_BN(
+                (c): Conv2d(96, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (dws): ModuleList(
+              (0-2): 3 x Conv2d_BN(
+                (c): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16, bias=False)
+                (bn): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (proj): Sequential(
+              (0): ELU(alpha=1.0)
+              (1): Conv2d_BN(
+                (c): Conv2d(288, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+          )
+        )
+      )
+      (mxa): Residual(
+        (m): MedicalXRayAttention(
+          (roi_predictor): Sequential(
+            (0): Conv2d(288, 144, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (1): ELU(alpha=1.0)
+            (2): Conv2d(144, 4, kernel_size=(1, 1), stride=(1, 1))
+            (3): Sigmoid()
+          )
+          (channel_attention): Sequential(
+            (0): AdaptiveAvgPool2d(output_size=1)
+            (1): Conv2d(288, 18, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (2): ELU(alpha=1.0)
+            (3): Conv2d(18, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (4): Sigmoid()
+          )
+          (spatial_attention): Sequential(
+            (0): Conv2d(2, 1, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), bias=False)
+            (1): Sigmoid()
+          )
+        )
+      )
+      (dw1): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(288, 288, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=288, bias=False)
+          (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(288, 576, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(576, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(576, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+  )
+  (blocks3): Sequential(
+    (0): Sequential(
+      (0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(288, 288, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=288, bias=False)
+          (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(288, 576, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(576, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(576, 288, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(288, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+    (1): PatchMerging(
+      (conv1): Conv2d_BN(
+        (c): Conv2d(288, 1152, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn): BatchNorm2d(1152, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (act): ELU(alpha=1.0)
+      (conv2): Conv2d_BN(
+        (c): Conv2d(1152, 1152, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), groups=1152, bias=False)
+        (bn): BatchNorm2d(1152, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (se): SEModule(
+        (fc1): Conv2d(1152, 288, kernel_size=(1, 1), stride=(1, 1))
+        (bn): Identity()
+        (act): ReLU(inplace=True)
+        (fc2): Conv2d(288, 1152, kernel_size=(1, 1), stride=(1, 1))
+        (gate): Sigmoid()
+      )
+      (conv3): Conv2d_BN(
+        (c): Conv2d(1152, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (2): Sequential(
+      (0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(384, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=384, bias=False)
+          (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(384, 768, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(768, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+    (3): EfficientViTBlock(
+      (dw0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(384, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=384, bias=False)
+          (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn0): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(384, 768, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(768, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+      (mixer): Residual(
+        (m): LocalWindowAttention(
+          (attn): CascadedGroupAttention(
+            (qkvs): ModuleList(
+              (0-3): 4 x Conv2d_BN(
+                (c): Conv2d(96, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (dws): ModuleList(
+              (0-3): 4 x Conv2d_BN(
+                (c): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16, bias=False)
+                (bn): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (proj): Sequential(
+              (0): ELU(alpha=1.0)
+              (1): Conv2d_BN(
+                (c): Conv2d(384, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+          )
+        )
+      )
+      (mxa): Residual(
+        (m): MedicalXRayAttention(
+          (roi_predictor): Sequential(
+            (0): Conv2d(384, 192, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (1): ELU(alpha=1.0)
+            (2): Conv2d(192, 4, kernel_size=(1, 1), stride=(1, 1))
+            (3): Sigmoid()
+          )
+          (channel_attention): Sequential(
+            (0): AdaptiveAvgPool2d(output_size=1)
+            (1): Conv2d(384, 24, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (2): ELU(alpha=1.0)
+            (3): Conv2d(24, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (4): Sigmoid()
+          )
+          (spatial_attention): Sequential(
+            (0): Conv2d(2, 1, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), bias=False)
+            (1): Sigmoid()
+          )
+        )
+      )
+      (dw1): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(384, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=384, bias=False)
+          (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(384, 768, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(768, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+    (4): EfficientViTBlock(
+      (dw0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(384, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=384, bias=False)
+          (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn0): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(384, 768, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(768, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+      (mixer): Residual(
+        (m): LocalWindowAttention(
+          (attn): CascadedGroupAttention(
+            (qkvs): ModuleList(
+              (0-3): 4 x Conv2d_BN(
+                (c): Conv2d(96, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (dws): ModuleList(
+              (0-3): 4 x Conv2d_BN(
+                (c): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16, bias=False)
+                (bn): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (proj): Sequential(
+              (0): ELU(alpha=1.0)
+              (1): Conv2d_BN(
+                (c): Conv2d(384, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+          )
+        )
+      )
+      (mxa): Residual(
+        (m): MedicalXRayAttention(
+          (roi_predictor): Sequential(
+            (0): Conv2d(384, 192, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (1): ELU(alpha=1.0)
+            (2): Conv2d(192, 4, kernel_size=(1, 1), stride=(1, 1))
+            (3): Sigmoid()
+          )
+          (channel_attention): Sequential(
+            (0): AdaptiveAvgPool2d(output_size=1)
+            (1): Conv2d(384, 24, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (2): ELU(alpha=1.0)
+            (3): Conv2d(24, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (4): Sigmoid()
+          )
+          (spatial_attention): Sequential(
+            (0): Conv2d(2, 1, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), bias=False)
+            (1): Sigmoid()
+          )
+        )
+      )
+      (dw1): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(384, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=384, bias=False)
+          (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(384, 768, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(768, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+    (5): EfficientViTBlock(
+      (dw0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(384, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=384, bias=False)
+          (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn0): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(384, 768, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(768, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+      (mixer): Residual(
+        (m): LocalWindowAttention(
+          (attn): CascadedGroupAttention(
+            (qkvs): ModuleList(
+              (0-3): 4 x Conv2d_BN(
+                (c): Conv2d(96, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (dws): ModuleList(
+              (0-3): 4 x Conv2d_BN(
+                (c): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16, bias=False)
+                (bn): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (proj): Sequential(
+              (0): ELU(alpha=1.0)
+              (1): Conv2d_BN(
+                (c): Conv2d(384, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+          )
+        )
+      )
+      (mxa): Residual(
+        (m): MedicalXRayAttention(
+          (roi_predictor): Sequential(
+            (0): Conv2d(384, 192, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (1): ELU(alpha=1.0)
+            (2): Conv2d(192, 4, kernel_size=(1, 1), stride=(1, 1))
+            (3): Sigmoid()
+          )
+          (channel_attention): Sequential(
+            (0): AdaptiveAvgPool2d(output_size=1)
+            (1): Conv2d(384, 24, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (2): ELU(alpha=1.0)
+            (3): Conv2d(24, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (4): Sigmoid()
+          )
+          (spatial_attention): Sequential(
+            (0): Conv2d(2, 1, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), bias=False)
+            (1): Sigmoid()
+          )
+        )
+      )
+      (dw1): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(384, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=384, bias=False)
+          (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(384, 768, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(768, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+    (6): EfficientViTBlock(
+      (dw0): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(384, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=384, bias=False)
+          (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn0): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(384, 768, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(768, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+      (mixer): Residual(
+        (m): LocalWindowAttention(
+          (attn): CascadedGroupAttention(
+            (qkvs): ModuleList(
+              (0-3): 4 x Conv2d_BN(
+                (c): Conv2d(96, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (dws): ModuleList(
+              (0-3): 4 x Conv2d_BN(
+                (c): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16, bias=False)
+                (bn): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+            (proj): Sequential(
+              (0): ELU(alpha=1.0)
+              (1): Conv2d_BN(
+                (c): Conv2d(384, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+                (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+              )
+            )
+          )
+        )
+      )
+      (mxa): Residual(
+        (m): MedicalXRayAttention(
+          (roi_predictor): Sequential(
+            (0): Conv2d(384, 192, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+            (1): ELU(alpha=1.0)
+            (2): Conv2d(192, 4, kernel_size=(1, 1), stride=(1, 1))
+            (3): Sigmoid()
+          )
+          (channel_attention): Sequential(
+            (0): AdaptiveAvgPool2d(output_size=1)
+            (1): Conv2d(384, 24, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (2): ELU(alpha=1.0)
+            (3): Conv2d(24, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (4): Sigmoid()
+          )
+          (spatial_attention): Sequential(
+            (0): Conv2d(2, 1, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), bias=False)
+            (1): Sigmoid()
+          )
+        )
+      )
+      (dw1): Residual(
+        (m): Conv2d_BN(
+          (c): Conv2d(384, 384, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=384, bias=False)
+          (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (ffn1): Residual(
+        (m): FFN(
+          (pw1): Conv2d_BN(
+            (c): Conv2d(384, 768, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(768, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+          (act): ELU(alpha=1.0)
+          (pw2): Conv2d_BN(
+            (c): Conv2d(768, 384, kernel_size=(1, 1), stride=(1, 1), bias=False)
+            (bn): BatchNorm2d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          )
+        )
+      )
+    )
+  )
+  (head): BN_Linear(
+    (bn): BatchNorm1d(384, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (l): Linear(in_features=384, out_features=14, bias=True)
+  )
+)
