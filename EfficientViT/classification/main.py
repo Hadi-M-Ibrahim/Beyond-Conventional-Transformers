@@ -32,6 +32,7 @@ from losses import DistillationLoss
 from model import build
 import utils
 
+from libauc.losses import AUCMLoss
 
 def get_args_parser():
     parser = argparse.ArgumentParser(
@@ -101,8 +102,7 @@ def get_args_parser():
     parser.add_argument('--color-jitter', type=float, default=0.4, metavar='PCT',
                         help='Color jitter factor (default: 0.4)')
     parser.add_argument('--aa', type=str, default='rand-m9-mstd0.5-inc1', metavar='NAME',
-                        help='Use AutoAugment policy. "v0" or "original". " + \
-                             "(default: rand-m9-mstd0.5-inc1)'),
+                        help='Use AutoAugment policy. "v0" or "original". (default: rand-m9-mstd0.5-inc1)'),
     parser.add_argument('--smoothing', type=float, default=0,
                         help='Label smoothing (default: 0.1)')
     parser.add_argument('--train-interpolation', type=str, default='bicubic',
@@ -138,7 +138,7 @@ def get_args_parser():
 
     # Distillation parameters
     parser.add_argument('--teacher-model', default='regnety_160', type=str, metavar='MODEL',
-                        help='Name of teacher model to train (default: "regnety_160"')
+                        help='Name of teacher model to train (default: "densenet121"')
     parser.add_argument('--teacher-path', type=str,
                         default='https://dl.fbaipublicfiles.com/deit/regnety_160-a5fe301d.pth')
     parser.add_argument('--distillation-type', default='none',
@@ -318,8 +318,11 @@ def main(args):
 
     lr_scheduler, _ = create_scheduler(args, optimizer)
 
+    
+    #pos_weight = torch.tensor([0.0, 0.933, 0.317, 0.059, 0.119, 0.318, 0.661, 0.113, 0.02, 0.362, 0.051, 0.259, 2.494, 0.052], device=device)
     criterion = torch.nn.BCEWithLogitsLoss()
-
+    #criterion = AUCMLoss()
+    
     """
     criterion = LabelSmoothingCrossEntropy()
 
@@ -331,6 +334,7 @@ def main(args):
     else:
         criterion = torch.nn.CrossEntropyLoss()
     """
+
 
     teacher_model = None
     if args.distillation_type != 'none':
@@ -344,14 +348,12 @@ def main(args):
     teacher_model.to(device)
     teacher_model.eval()
 
-
     # wrap the criterion in our custom DistillationLoss, which
     # just dispatches to the original criterion if args.distillation_type is
     # 'none'
     criterion = DistillationLoss(
         criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau
     )
-
 
     output_dir = Path(args.output_dir)
     if args.output_dir and utils.is_main_process():
@@ -381,7 +383,7 @@ def main(args):
     if args.eval:
         # utils.replace_batchnorm(model) # Users may choose whether to merge Conv-BN layers during eval
         print(f"Evaluating model: {args.model}")
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate(data_loader_val, model, device, val_loader=data_loader_val)
         print(
             f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['accuracy']:.1f}%")
         return
@@ -404,8 +406,10 @@ def main(args):
         )
 
         lr_scheduler.step(epoch)
+        
+        test_stats = evaluate(data_loader_val, model, device, val_loader=data_loader_val)
 
-        test_stats = evaluate(data_loader_val, model, device)
+
         print(
             f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['accuracy']:.1f}%")
         
@@ -429,9 +433,9 @@ def main(args):
         print(f'Max accuracy: {max_accuracy:.2f}%')
         
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
-                        **{f'test_{k}': v for k, v in test_stats.items()},
-                        'epoch': epoch,
-                        'n_parameters': n_parameters}
+                     **{f'test_{k}': v for k, v in test_stats.items()},
+                     'epoch': epoch,
+                     'n_parameters': n_parameters}
 
         if args.output_dir and utils.is_main_process():
             with (output_dir / "log.txt").open("a") as f:

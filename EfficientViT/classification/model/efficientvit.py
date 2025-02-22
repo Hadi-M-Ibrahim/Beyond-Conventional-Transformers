@@ -68,7 +68,7 @@ class PatchMerging(torch.nn.Module):
         super().__init__()
         hid_dim = int(dim * 4)
         self.conv1 = Conv2d_BN(dim, hid_dim, 1, 1, 0, resolution=input_resolution)
-        self.act = torch.nn.ReLU()
+        self.act = torch.nn.GELU()
         self.conv2 = Conv2d_BN(hid_dim, hid_dim, 3, 2, 1, groups=hid_dim, resolution=input_resolution)
         self.se = SqueezeExcite(hid_dim, .25)
         self.conv3 = Conv2d_BN(hid_dim, out_dim, 1, 1, 0, resolution=input_resolution // 2)
@@ -96,7 +96,7 @@ class FFN(torch.nn.Module):
     def __init__(self, ed, h, resolution):
         super().__init__()
         self.pw1 = Conv2d_BN(ed, h, resolution=resolution)
-        self.act = torch.nn.ReLU()
+        self.act = torch.nn.GELU()
         self.pw2 = Conv2d_BN(h, ed, bn_weight_init=0, resolution=resolution)
 
     def forward(self, x):
@@ -133,7 +133,7 @@ class CascadedGroupAttention(torch.nn.Module):
             dws.append(Conv2d_BN(self.key_dim, self.key_dim, kernels[i], 1, kernels[i]//2, groups=self.key_dim, resolution=resolution))
         self.qkvs = torch.nn.ModuleList(qkvs)
         self.dws = torch.nn.ModuleList(dws)
-        self.proj = torch.nn.Sequential(torch.nn.ReLU(), Conv2d_BN(
+        self.proj = torch.nn.Sequential(torch.nn.GELU(), Conv2d_BN(
             self.d * num_heads, dim, bn_weight_init=0, resolution=resolution))
 
         points = list(itertools.product(range(resolution), range(resolution)))
@@ -260,7 +260,7 @@ class MedicalXRayAttention(nn.Module):
 
         self.roi_predictor = nn.Sequential(
             nn.Conv2d(in_channels, in_channels // 2, kernel_size=3, padding=1, bias=False),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Conv2d(in_channels // 2, 4, kernel_size=1, bias=True),
             nn.Sigmoid()
         )
@@ -268,7 +268,7 @@ class MedicalXRayAttention(nn.Module):
         self.channel_attention = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),  
             nn.Conv2d(in_channels, in_channels // reduction, kernel_size=1, bias=False),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Conv2d(in_channels // reduction, in_channels, kernel_size=1, bias=False),
             nn.Sigmoid()
         )
@@ -388,11 +388,11 @@ class EfficientViT(torch.nn.Module):
         # Patch embedding
         self.patch_embed = torch.nn.Sequential(
             Conv2d_BN(in_chans, embed_dim[0] // 8, 3, 2, 1, resolution=resolution),
-            torch.nn.ReLU(),
+            torch.nn.GELU(),
             Conv2d_BN(embed_dim[0] // 8, embed_dim[0] // 4, 3, 2, 1, resolution=resolution // 2),
-            torch.nn.ReLU(),
+            torch.nn.GELU(),
             Conv2d_BN(embed_dim[0] // 4, embed_dim[0] // 2, 3, 2, 1, resolution=resolution // 4),
-            torch.nn.ReLU(),
+            torch.nn.GELU(),
             Conv2d_BN(embed_dim[0] // 2, embed_dim[0], 3, 2, 1, resolution=resolution // 8)
         )
 
