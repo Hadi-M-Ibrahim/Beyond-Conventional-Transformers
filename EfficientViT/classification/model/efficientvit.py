@@ -136,12 +136,12 @@ class CascadedGroupAttention(torch.nn.Module):
         self.proj = torch.nn.Sequential(torch.nn.ReLU(), Conv2d_BN(
             self.d * num_heads, dim, bn_weight_init=0, resolution=resolution))
 
-        roints = list(itertools.product(range(resolution), range(resolution)))
-        N = len(roints)
+        points = list(itertools.product(range(resolution), range(resolution)))
+        N = len(points)
         attention_offsets = {}
         idxs = []
-        for p1 in roints:
-            for p2 in roints:
+        for p1 in points:
+            for p2 in points:
                 offset = (abs(p1[0] - p2[0]), abs(p1[1] - p2[1]))
                 if offset not in attention_offsets:
                     attention_offsets[offset] = len(attention_offsets)
