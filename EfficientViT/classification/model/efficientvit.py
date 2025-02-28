@@ -136,12 +136,12 @@ class CascadedGroupAttention(torch.nn.Module):
         self.proj = torch.nn.Sequential(torch.nn.ReLU(), Conv2d_BN(
             self.d * num_heads, dim, bn_weight_init=0, resolution=resolution))
 
-        points = list(itertools.product(range(resolution), range(resolution)))
-        N = len(points)
+        roints = list(itertools.product(range(resolution), range(resolution)))
+        N = len(roints)
         attention_offsets = {}
         idxs = []
-        for p1 in points:
-            for p2 in points:
+        for p1 in roints:
+            for p2 in roints:
                 offset = (abs(p1[0] - p2[0]), abs(p1[1] - p2[1]))
                 if offset not in attention_offsets:
                     attention_offsets[offset] = len(attention_offsets)
@@ -251,14 +251,14 @@ class LocalWindowAttention(torch.nn.Module):
 
 class MedicalXRayAttention(nn.Module):
     """
-    Medical X-Ray Attention (MXA) Module with dynamic POI selection and CBAM-like attention.
+    Medical X-Ray Attention (MXA) Module with dynamic ROI selection and CBAM-like attention.
     """
     def __init__(self, in_channels, reduction=16):
         super(MedicalXRayAttention, self).__init__()
         self.in_channels = in_channels
         self.reduction = reduction
 
-        self.poi_predictor = nn.Sequential(
+        self.roi_predictor = nn.Sequential(
             nn.Conv2d(in_channels, in_channels // 2, kernel_size=3, padding=1, bias=False),
             nn.ReLU(),
             nn.Conv2d(in_channels // 2, 4, kernel_size=1, bias=True),
@@ -280,18 +280,18 @@ class MedicalXRayAttention(nn.Module):
 
     def forward(self, x):
         """
-        Forward pass for MXA with dynamic POI selection.
+        Forward pass for MXA with dynamic ROI selection.
         :param x: Input tensor of shape (B, C, H, W)
         :return: Attention-weighted output.
         """
         B, C, H, W = x.shape
 
-        poi_coords = self.poi_predictor(x)  
-        poi_coords = poi_coords.mean(dim=(2, 3))
+        roi_coords = self.roi_predictor(x)  
+        roi_coords = roi_coords.mean(dim=(2, 3))
         
         x_pooled = []
         for i in range(B):
-            x1, y1, x2, y2 = poi_coords[i]
+            x1, y1, x2, y2 = roi_coords[i]
             x1, y1, x2, y2 = int(x1 * W), int(y1 * H), int(x2 * W), int(y2 * H)  
 
             x1, y1 = max(0, x1), max(0, y1)
