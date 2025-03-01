@@ -1,0 +1,1 @@
+{"/home/ubuntu/Cream/Outputs/Checkpoints/checkpoint_0.pth": {"accuracy": 0.17931993156544054, "f1_micro": 0.3041073533411914, "auc_micro": 0.6097777363408755, "n_parameters": 12094162, "evaluated_at": "2025-03-01T11:07:30.947237"}}
