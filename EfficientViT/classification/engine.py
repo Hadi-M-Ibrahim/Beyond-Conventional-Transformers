@@ -13,6 +13,8 @@ from timm.utils import ModelEma
 from losses import DistillationLoss
 import utils
 
+from sklearn.metrics import f1_score, roc_auc_score
+
 def set_bn_state(model):
     for m in model.modules():
         if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
@@ -78,32 +80,49 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
 @torch.no_grad()
 def evaluate(data_loader, model, device):
     criterion = torch.nn.BCEWithLogitsLoss()
-
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test:'
-
-    # switch to evaluation mode
+    
+    all_preds = []
+    all_targets = []
+    
     model.eval()
+    with torch.no_grad():
+        for images, target in metric_logger.log_every(data_loader, 10, header):
+            images = images.to(device, non_blocking=True)
+            target = target.to(device, non_blocking=True)
 
-    for images, target in metric_logger.log_every(data_loader, 10, header):
-        images = images.to(device, non_blocking=True)
-        target = target.to(device, non_blocking=True)
+            with torch.cuda.amp.autocast():
+                output = model(images)
+                loss = criterion(output, target)
 
-        with torch.cuda.amp.autocast():
-            output = model(images)
-            loss = criterion(output, target)
+            probs = torch.sigmoid(output)
+            preds = probs > 0.5
+            correct = preds.eq(target).sum().item()
+            total = target.numel()
+            accuracy = correct / total
 
-        preds = torch.sigmoid(output) > 0.5
-        correct = preds.eq(target).sum().item()
-        total = target.numel()
-        accuracy = correct / total
+            batch_size = images.shape[0]
+            metric_logger.update(loss=loss.item())
+            metric_logger.meters['accuracy'].update(accuracy, n=batch_size)
+            
+            all_preds.append(probs.detach().cpu())
+            all_targets.append(target.detach().cpu())
 
-        batch_size = images.shape[0]
-        metric_logger.update(loss=loss.item())
-        metric_logger.meters['accuracy'].update(accuracy, n=batch_size)
+    all_preds = torch.cat(all_preds).numpy()
+    all_targets = torch.cat(all_targets).numpy()
+    
+    f1_micro = f1_score(all_targets, (all_preds > 0.5).astype(int), average='micro')
+    auc_micro = roc_auc_score(all_targets, all_preds, average='micro')
 
     metric_logger.synchronize_between_processes()
-    print('* Accuracy: {accuracy.global_avg:.3f} loss: {losses.global_avg:.3f}'
-          .format(accuracy=metric_logger.accuracy, losses=metric_logger.loss))
+    print('* Accuracy: {acc:.3f} loss: {loss:.3f} f1_micro: {f1:.3f} auc_micro: {auc:.3f}'
+          .format(acc=metric_logger.accuracy.global_avg,
+                  loss=metric_logger.loss.global_avg,
+                  f1=f1_micro,
+                  auc=auc_micro))
 
-    return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+    metrics = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+    metrics['f1_micro'] = f1_micro
+    metrics['auc_micro'] = auc_micro
+    return metrics
