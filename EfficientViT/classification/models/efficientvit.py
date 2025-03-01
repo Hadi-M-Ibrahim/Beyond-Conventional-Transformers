@@ -68,7 +68,7 @@ class PatchMerging(torch.nn.Module):
         super().__init__()
         hid_dim = int(dim * 4)
         self.conv1 = Conv2d_BN(dim, hid_dim, 1, 1, 0, resolution=input_resolution)
-        self.act = torch.nn.GELU()
+        self.act = torch.nn.ReLU()
         self.conv2 = Conv2d_BN(hid_dim, hid_dim, 3, 2, 1, groups=hid_dim, resolution=input_resolution)
         self.se = SqueezeExcite(hid_dim, .25)
         self.conv3 = Conv2d_BN(hid_dim, out_dim, 1, 1, 0, resolution=input_resolution // 2)
@@ -96,7 +96,7 @@ class FFN(torch.nn.Module):
     def __init__(self, ed, h, resolution):
         super().__init__()
         self.pw1 = Conv2d_BN(ed, h, resolution=resolution)
-        self.act = torch.nn.GELU()
+        self.act = torch.nn.ReLU()
         self.pw2 = Conv2d_BN(h, ed, bn_weight_init=0, resolution=resolution)
 
     def forward(self, x):
@@ -133,7 +133,7 @@ class CascadedGroupAttention(torch.nn.Module):
             dws.append(Conv2d_BN(self.key_dim, self.key_dim, kernels[i], 1, kernels[i]//2, groups=self.key_dim, resolution=resolution))
         self.qkvs = torch.nn.ModuleList(qkvs)
         self.dws = torch.nn.ModuleList(dws)
-        self.proj = torch.nn.Sequential(torch.nn.GELU(), Conv2d_BN(
+        self.proj = torch.nn.Sequential(torch.nn.ReLU(), Conv2d_BN(
             self.d * num_heads, dim, bn_weight_init=0, resolution=resolution))
 
         points = list(itertools.product(range(resolution), range(resolution)))
@@ -251,16 +251,16 @@ class LocalWindowAttention(torch.nn.Module):
 
 class MedicalXRayAttention(nn.Module):
     """
-    Medical X-Ray Attention (MXA) Module with dynamic ROI selection and CBAM-like attention.
+    Medical X-Ray Attention (MXA) Module with dynamic POI selection and CBAM-like attention.
     """
     def __init__(self, in_channels, reduction=16):
         super(MedicalXRayAttention, self).__init__()
         self.in_channels = in_channels
         self.reduction = reduction
 
-        self.roi_predictor = nn.Sequential(
+        self.poi_predictor = nn.Sequential(
             nn.Conv2d(in_channels, in_channels // 2, kernel_size=3, padding=1, bias=False),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Conv2d(in_channels // 2, 4, kernel_size=1, bias=True),
             nn.Sigmoid()
         )
@@ -268,7 +268,7 @@ class MedicalXRayAttention(nn.Module):
         self.channel_attention = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),  
             nn.Conv2d(in_channels, in_channels // reduction, kernel_size=1, bias=False),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Conv2d(in_channels // reduction, in_channels, kernel_size=1, bias=False),
             nn.Sigmoid()
         )
@@ -280,18 +280,18 @@ class MedicalXRayAttention(nn.Module):
 
     def forward(self, x):
         """
-        Forward pass for MXA with dynamic ROI selection.
+        Forward pass for MXA with dynamic POI selection.
         :param x: Input tensor of shape (B, C, H, W)
         :return: Attention-weighted output.
         """
         B, C, H, W = x.shape
 
-        roi_coords = self.roi_predictor(x)  
-        roi_coords = roi_coords.mean(dim=(2, 3))
+        poi_coords = self.poi_predictor(x)  
+        poi_coords = poi_coords.mean(dim=(2, 3))
         
         x_pooled = []
         for i in range(B):
-            x1, y1, x2, y2 = roi_coords[i]
+            x1, y1, x2, y2 = poi_coords[i]
             x1, y1, x2, y2 = int(x1 * W), int(y1 * H), int(x2 * W), int(y2 * H)  
 
             x1, y1 = max(0, x1), max(0, y1)
@@ -368,7 +368,7 @@ class EfficientViT(torch.nn.Module):
     def __init__(self, 
                  img_size=224,
                  patch_size=16,
-                 in_chans=3,
+                 in_chans=1,
                  num_classes=1000,
                  stages=['s', 's', 's'],
                  embed_dim=[64, 128, 192],
@@ -388,11 +388,11 @@ class EfficientViT(torch.nn.Module):
         # Patch embedding
         self.patch_embed = torch.nn.Sequential(
             Conv2d_BN(in_chans, embed_dim[0] // 8, 3, 2, 1, resolution=resolution),
-            torch.nn.GELU(),
+            torch.nn.ReLU(),
             Conv2d_BN(embed_dim[0] // 8, embed_dim[0] // 4, 3, 2, 1, resolution=resolution // 2),
-            torch.nn.GELU(),
+            torch.nn.ReLU(),
             Conv2d_BN(embed_dim[0] // 4, embed_dim[0] // 2, 3, 2, 1, resolution=resolution // 4),
-            torch.nn.GELU(),
+            torch.nn.ReLU(),
             Conv2d_BN(embed_dim[0] // 2, embed_dim[0], 3, 2, 1, resolution=resolution // 8)
         )
 
@@ -450,7 +450,7 @@ class EfficientViT(torch.nn.Module):
         else:
             x_out = self.head(x)
 
-        if self.multi_label and not isinstance(x_out, tuple):
-            x_out = torch.sigmoid(x_out)
+        #if self.multi_label and not isinstance(x_out, tuple):
+         #   x_out = torch.sigmoid(x_out)
 
         return x_out

@@ -29,7 +29,7 @@ from data.threeaugment import new_data_aug_generator
 from engine import train_one_epoch, evaluate, load_custom_teacher_model
 from losses import DistillationLoss
 
-from model import build
+from models import build
 import utils
 
 
@@ -381,7 +381,8 @@ def main(args):
     if args.eval:
         # utils.replace_batchnorm(model) # Users may choose whether to merge Conv-BN layers during eval
         print(f"Evaluating model: {args.model}")
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate(data_loader_val, model,device)
+        
         print(
             f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['accuracy']:.1f}%")
         return
@@ -405,7 +406,7 @@ def main(args):
 
         lr_scheduler.step(epoch)
 
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate(data_loader_val, model,device)
         print(
             f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['accuracy']:.1f}%")
         
@@ -424,7 +425,7 @@ def main(args):
                         'scaler': loss_scaler.state_dict(),
                         'args': args,
                     }, checkpoint_path)
-
+        
         max_accuracy = max(max_accuracy, test_stats["accuracy"])
         print(f'Max accuracy: {max_accuracy:.2f}%')
         

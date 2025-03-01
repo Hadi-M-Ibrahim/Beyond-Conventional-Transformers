@@ -137,13 +137,14 @@ EfficientViT_MultiLabel_m5 = {
 EfficientViT_MultiLabel_teacher = {
     'img_size': 224,
     'patch_size': 16,
-    'embed_dim': [512, 768, 1024],
-    'depth': [8, 12, 16],       
-    'num_heads': [8, 12, 16],
+    'embed_dim': [256, 384, 512],
+    'depth': [3, 6, 8],
+    'num_heads': [4, 6, 8],
     'window_size': [7, 7, 7],
-    'kernels': [7, 5, 3, 3] * 4,
+    'kernels': [7, 5, 3, 3] * 3,
     'multi_label': True,
 }
+
 """
 @register_model
 def EfficientViT_M0(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_m0):

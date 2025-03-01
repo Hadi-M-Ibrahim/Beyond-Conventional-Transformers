@@ -17,25 +17,65 @@ import torchvision.models as models
 
 from sklearn.metrics import f1_score, roc_auc_score
 
+import torchxrayvision as xrv
 
+import torchvision.transforms.functional as TF
+
+import numpy as np 
+
+class TeacherOutputAdapter(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        # (student index : teacher index)
+        self.mapping = {
+            1: 17,  # Enlarged Cardiomediastinum
+            2: 10,  # Cardiomegaly
+            3: 16,  # Lung Opacity
+            4: 14,  # Lung Lesion
+            5: 4,   # Edema
+            6: 1,   # Consolidation
+            7: 8,   # Pneumonia
+            8: 0,   # Atelectasis
+            9: 3,   # Pneumothorax
+            10: 7,  # Pleural Effusion
+            11: 9,  # Pleural Other
+            12: 15, # Fracture
+        }
+    
+    def forward(self, teacher_logits):
+        """
+        teacher_logits: Tensor of shape (batch_size, 18)
+        Returns:
+            mapped_logits: Tensor of shape (batch_size, 14) with desired ordering:
+            [No Finding, Enlarged Cardiomediastinum, Cardiomegaly, Lung Opacity, Lung Lesion,
+             Edema, Consolidation, Pneumonia, Atelectasis, Pneumothorax, Pleural Effusion,
+             Pleural Other, Fracture, Support Devices]
+        """
+        batch_size = teacher_logits.shape[0]
+        mapped = torch.zeros((batch_size, 14), device=teacher_logits.device)
+        
+        # Compute "No Finding"
+        no_finding = torch.prod(1 - torch.sigmoid(teacher_logits), dim=1)
+        mapped[:, 0] = no_finding
+        
+        for student_idx, teacher_idx in self. mapping.items():
+            mapped[:, student_idx] = teacher_logits[:, teacher_idx]
+        
+        # "Support Devices" set to 0
+        mapped[:, 13] = 0.0
+        
+        return mapped
+        
 def load_custom_teacher_model(teacher_path):
-    teacher_model = models.densenet121(pretrained=False, num_classes=14)
+    teacher_model = xrv.models.DenseNet(weights="densenet121-res224-chex")
+    teacher_model.eval()  # Ensure the teacher is in eval mode.
     
-    checkpoint = torch.load(teacher_path, map_location="cpu")
-
-    if "model" in checkpoint:
-        checkpoint = checkpoint["model"]
-
-    state_dict = {k: v for k, v in checkpoint.items() if k in teacher_model.state_dict()}
+    # Wrap the teacher model with the adapter that maps its output to 14 classes.
+    adapter = TeacherOutputAdapter()
+    teacher_model = torch.nn.Sequential(teacher_model, adapter)
     
-    missing_keys, unexpected_keys = teacher_model.load_state_dict(state_dict, strict=False)
-
-    if missing_keys:
-        print(f"Missing keys: {missing_keys}")
-    if unexpected_keys:
-        print(f"Unexpected keys: {unexpected_keys}")
-
     return teacher_model
+
 
 def set_bn_state(model):
     for m in model.modules():
