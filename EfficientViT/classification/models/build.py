@@ -108,6 +108,7 @@ EfficientViT_MultiLabel_m3 = {
         'depth': [1, 2, 3],
         'num_heads': [4, 3, 4],
         'window_size': [7, 7, 7],
+        'kernels': [5, 5, 5, 5],
         'multi_label': True,
     }
 
@@ -118,6 +119,7 @@ EfficientViT_MultiLabel_m4 = {
         'depth': [1, 2, 3],
         'num_heads': [4, 4, 4],
         'window_size': [7, 7, 7],
+        'kernels': [7, 5, 3, 3],
         'multi_label': True,
     }
 
@@ -128,8 +130,21 @@ EfficientViT_MultiLabel_m5 = {
         'depth': [1, 3, 4],
         'num_heads': [3, 3, 4],
         'window_size': [7, 7, 7],
+        'kernels': [7, 5, 3, 3],
         'multi_label': True,
     }
+
+EfficientViT_MultiLabel_teacher = {
+    'img_size': 224,
+    'patch_size': 16,
+    'embed_dim': [256, 384, 512],
+    'depth': [3, 6, 8],
+    'num_heads': [4, 6, 8],
+    'window_size': [7, 7, 7],
+    'kernels': [7, 5, 3, 3] * 3,
+    'multi_label': True,
+}
+
 """
 @register_model
 def EfficientViT_M0(num_classes=1000, pretrained=False, distillation=False, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_m0):
@@ -340,6 +355,23 @@ def EfficientViT_MultiLabel_M5(num_classes=14, pretrained=False, distillation=Tr
         replace_batchnorm(model)
     return model
 
+@register_model
+def EfficientViT_MultiLabel_Teacher(num_classes=14, pretrained=False, distillation=True, fuse=False, pretrained_cfg=None, model_cfg=EfficientViT_MultiLabel_teacher):
+    model = EfficientViT(num_classes=num_classes, distillation=distillation, **model_cfg)
+    if pretrained:
+        pretrained = _checkpoint_url_format.format(pretrained)
+        checkpoint = torch.hub.load_state_dict_from_url(
+            pretrained, map_location='cpu')
+        d = checkpoint['model']
+        D = model.state_dict()
+        for k in d.keys():
+            if D[k].shape != d[k].shape:
+                d[k] = d[k][:, :, None, None]
+        model.load_state_dict(d)
+    if fuse:
+        replace_batchnorm(model)
+    return model
+    
 def replace_batchnorm(net):
     for child_name, child in net.named_children():
         if hasattr(child, 'fuse'):

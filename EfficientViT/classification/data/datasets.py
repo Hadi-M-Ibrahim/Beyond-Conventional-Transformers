@@ -11,12 +11,17 @@ import torch
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.data import create_transform
 
+import numpy as np
+
+import random 
+from PIL import ImageFilter, ImageOps
+
 try:
     from timm.data import TimmDatasetTar
 except ImportError:
     # for higher version of timm
     from timm.data import ImageDataset as TimmDatasetTar
-
+    
 class INatDataset(ImageFolder):
     def __init__(self, root, train=True, year=2018, transform=None, target_transform=None,
                  category='name', loader=default_loader):
@@ -86,7 +91,7 @@ class CheXpertDataset(torch.utils.data.Dataset):
   
                 label = []
                 for x in parts[5:19]:
-                    if x == '-1': 
+                    if x == '-1.0': 
 
                         label.append(1.0)
                     elif x == '':  
@@ -151,42 +156,74 @@ def build_dataset(is_train, args):
     return dataset, nb_classes
 
 
-def build_transform(is_train, args):
-    resize_im = args.input_size > 32
-    if is_train:
-        # this should always dispatch to transforms_imagenet_train
-        transform = create_transform(
-            input_size=args.input_size,
-            is_training=True,
-            color_jitter=args.color_jitter,
-            auto_augment=args.aa,
-            interpolation=args.train_interpolation,
-            re_prob=args.reprob,
-            re_mode=args.remode,
-            re_count=args.recount,
-        )
-        if not resize_im:
-            # replace RandomResizedCropAndInterpolation with
-            # RandomCrop
-            transform.transforms[0] = transforms.RandomCrop(
-                args.input_size, padding=4)
-        return transform
-
-    t = []
-    if args.finetune:
-        t.append(
-            transforms.Resize((args.input_size, args.input_size),
-                                interpolation=3)
-        )
-    else:
-        if resize_im:
-            size = int((256 / 224) * args.input_size)
-            t.append(
-                # to maintain same ratio w.r.t. 224 images
-                transforms.Resize(size, interpolation=3),
-            )
-            t.append(transforms.CenterCrop(args.input_size))
+def normalize_hu(image, min_hu=-1024, max_hu=1024):
+    """Normalize Hounsfield Units (HU) to [0,1] range."""
+    image = (image - min_hu) / (max_hu - min_hu)
+    return torch.clamp(image, 0, 1)
     
-    t.append(transforms.ToTensor())
-    t.append(transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD))
-    return transforms.Compose(t)
+    return transforms.Compose(transform_list)
+
+class GaussianBlur(object):
+    """
+    Apply Gaussian Blur to the PIL image.
+    """
+    def __init__(self, p=0.1, radius_min=0.1, radius_max=.5):
+        self.prob = p
+        self.radius_min = radius_min
+        self.radius_max = radius_max
+
+    def __call__(self, img):
+        do_it = random.random() <= self.prob
+        if not do_it:
+            return img
+
+        img = img.filter(
+            ImageFilter.GaussianBlur(
+                radius=random.uniform(self.radius_min, self.radius_max)
+            )
+        )
+        return img
+
+class ElasticTransform(object):
+    """
+    Apply Solarization to the PIL image.
+    """
+    def __init__(self, p=0.2):
+        self.p = p
+        self.transf = transforms.ElasticTransform(100.0)
+ 
+    def __call__(self, img):
+        if random.random() < self.p:
+            return self.transf(img)
+        else:
+            return img
+            
+def build_transform(is_train, args):
+    if is_train:
+        transform_list = [
+            transforms.Resize((args.input_size, args.input_size), interpolation=3),
+            ElasticTransform(p=0.6),
+            GaussianBlur(p=0.4),     
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomRotation(degrees=10),
+            transforms.RandomAffine(degrees=10, translate=(0.05, 0.05), scale=(0.9, 1.1)),
+            transforms.RandomResizedCrop(args.input_size, scale=(0.8, 1.0)),
+            transforms.Lambda(lambda img: torch.from_numpy(np.array(img)).float()),
+            transforms.Lambda(lambda x: x.mean(dim=-1) if x.ndim == 3 and x.shape[-1] == 3 else x),
+            transforms.Lambda(lambda x: x * (2048.0 / 255.0) - 1024.0),
+            transforms.Lambda(lambda x: x.unsqueeze(0).repeat(3, 1, 1) if x.ndim == 2 else x),
+            transforms.Grayscale(1)
+
+        ]
+    else:
+        transform_list = [
+            transforms.Resize((args.input_size, args.input_size), interpolation=3),
+            transforms.CenterCrop(args.input_size),
+            transforms.Lambda(lambda img: torch.from_numpy(np.array(img)).float()),
+            transforms.Lambda(lambda x: x.mean(dim=-1) if x.ndim == 3 and x.shape[-1] == 3 else x),
+            transforms.Lambda(lambda x: x * (2048.0 / 255.0) - 1024.0),
+            transforms.Lambda(lambda x: x.unsqueeze(0).repeat(3, 1, 1) if x.ndim == 2 else x),
+            transforms.Grayscale(1)
+        ]
+    
+    return transforms.Compose(transform_list)

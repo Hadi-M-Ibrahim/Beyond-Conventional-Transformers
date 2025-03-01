@@ -15,25 +15,67 @@ import utils
 
 import torchvision.models as models
 
+from sklearn.metrics import f1_score, roc_auc_score
 
+import torchxrayvision as xrv
+
+import torchvision.transforms.functional as TF
+
+import numpy as np 
+
+class TeacherOutputAdapter(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        # (student index : teacher index)
+        self.mapping = {
+            1: 17,  # Enlarged Cardiomediastinum
+            2: 10,  # Cardiomegaly
+            3: 16,  # Lung Opacity
+            4: 14,  # Lung Lesion
+            5: 4,   # Edema
+            6: 1,   # Consolidation
+            7: 8,   # Pneumonia
+            8: 0,   # Atelectasis
+            9: 3,   # Pneumothorax
+            10: 7,  # Pleural Effusion
+            11: 9,  # Pleural Other
+            12: 15, # Fracture
+        }
+    
+    def forward(self, teacher_logits):
+        """
+        teacher_logits: Tensor of shape (batch_size, 18)
+        Returns:
+            mapped_logits: Tensor of shape (batch_size, 14) with desired ordering:
+            [No Finding, Enlarged Cardiomediastinum, Cardiomegaly, Lung Opacity, Lung Lesion,
+             Edema, Consolidation, Pneumonia, Atelectasis, Pneumothorax, Pleural Effusion,
+             Pleural Other, Fracture, Support Devices]
+        """
+        batch_size = teacher_logits.shape[0]
+        mapped = torch.zeros((batch_size, 14), device=teacher_logits.device)
+        
+        # Compute "No Finding"
+        no_finding = torch.prod(1 - torch.sigmoid(teacher_logits), dim=1)
+        mapped[:, 0] = no_finding
+        
+        for student_idx, teacher_idx in self. mapping.items():
+            mapped[:, student_idx] = teacher_logits[:, teacher_idx]
+        
+        # "Support Devices" set to 0
+        mapped[:, 13] = 0.0
+        
+        return mapped
+        
 def load_custom_teacher_model(teacher_path):
-    teacher_model = models.densenet121(pretrained=False, num_classes=14)
+    teacher_model = xrv.models.DenseNet(weights="densenet121-res224-chex")
+    teacher_model.eval()  # Ensure the teacher is in eval mode.
     
-    checkpoint = torch.load(teacher_path, map_location="cpu")
-
-    if "model" in checkpoint:
-        checkpoint = checkpoint["model"]
-
-    state_dict = {k: v for k, v in checkpoint.items() if k in teacher_model.state_dict()}
+    # Wrap the teacher model with the adapter that maps its output to 14 classes.
+    adapter = TeacherOutputAdapter()
+    teacher_model = torch.nn.Sequential(teacher_model, adapter)
     
-    missing_keys, unexpected_keys = teacher_model.load_state_dict(state_dict, strict=False)
-
-    if missing_keys:
-        print(f"Missing keys: {missing_keys}")
-    if unexpected_keys:
-        print(f"Unexpected keys: {unexpected_keys}")
-
     return teacher_model
+
 
 def set_bn_state(model):
     for m in model.modules():
@@ -98,34 +140,52 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
 
 
 @torch.no_grad()
+
 def evaluate(data_loader, model, device):
     criterion = torch.nn.BCEWithLogitsLoss()
-
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Test:'
-
-    # switch to evaluation mode
+    
+    all_preds = []
+    all_targets = []
+    
     model.eval()
+    with torch.no_grad():
+        for images, target in metric_logger.log_every(data_loader, 10, header):
+            images = images.to(device, non_blocking=True)
+            target = target.to(device, non_blocking=True)
 
-    for images, target in metric_logger.log_every(data_loader, 10, header):
-        images = images.to(device, non_blocking=True)
-        target = target.to(device, non_blocking=True)
+            with torch.cuda.amp.autocast():
+                output = model(images)
+                loss = criterion(output, target)
 
-        with torch.cuda.amp.autocast():
-            output = model(images)
-            loss = criterion(output, target)
+            probs = torch.sigmoid(output)
+            preds = probs > 0.5
+            correct = preds.eq(target).sum().item()
+            total = target.numel()
+            accuracy = correct / total
 
-        preds = torch.sigmoid(output) > 0.5
-        correct = preds.eq(target).sum().item()
-        total = target.numel()
-        accuracy = correct / total
+            batch_size = images.shape[0]
+            metric_logger.update(loss=loss.item())
+            metric_logger.meters['accuracy'].update(accuracy, n=batch_size)
+            
+            all_preds.append(probs.detach().cpu())
+            all_targets.append(target.detach().cpu())
 
-        batch_size = images.shape[0]
-        metric_logger.update(loss=loss.item())
-        metric_logger.meters['accuracy'].update(accuracy, n=batch_size)
+    all_preds = torch.cat(all_preds).numpy()
+    all_targets = torch.cat(all_targets).numpy()
+    
+    f1_micro = f1_score(all_targets, (all_preds > 0.5).astype(int), average='micro')
+    auc_micro = roc_auc_score(all_targets, all_preds, average='micro')
 
     metric_logger.synchronize_between_processes()
-    print('* Accuracy: {accuracy.global_avg:.3f} loss: {losses.global_avg:.3f}'
-          .format(accuracy=metric_logger.accuracy, losses=metric_logger.loss))
+    print('* Accuracy: {acc:.3f} loss: {loss:.3f} f1_micro: {f1:.3f} auc_micro: {auc:.3f}'
+          .format(acc=metric_logger.accuracy.global_avg,
+                  loss=metric_logger.loss.global_avg,
+                  f1=f1_micro,
+                  auc=auc_micro))
 
-    return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+    metrics = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+    metrics['f1_micro'] = f1_micro
+    metrics['auc_micro'] = auc_micro
+    return metrics
