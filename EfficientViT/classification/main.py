@@ -336,13 +336,13 @@ def main(args):
     if args.distillation_type != 'none':
         print(f"Creating teacher model using torchxrayvision: {args.teacher_model}")
     
-    if args.teacher_model == 'densenet121':
-        teacher_model = load_custom_teacher_model(args.teacher_path)
-    else:
-        raise ValueError(f"Unsupported teacher model: {args.teacher_model} Supported teacher models are: densenet121")
-
-    teacher_model.to(device)
-    teacher_model.eval()
+        if args.teacher_model == 'densenet121':
+            teacher_model = load_custom_teacher_model(args.teacher_path)
+        else:
+            raise ValueError(f"Unsupported teacher model: {args.teacher_model} Supported teacher models are: densenet121")
+    
+        teacher_model.to(device)
+        teacher_model.eval()
 
 
     # wrap the criterion in our custom DistillationLoss, which
