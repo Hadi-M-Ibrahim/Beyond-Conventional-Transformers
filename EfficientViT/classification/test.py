@@ -23,7 +23,7 @@ from timm.utils import NativeScaler, get_state_dict, ModelEma
 from data.samplers import RASampler
 from data.datasets import build_dataset
 from data.threeaugment import new_data_aug_generator
-from engine import train_one_epoch, evaluate, load_custom_teacher_model
+from engine import train_one_epoch, evaluate
 from losses import DistillationLoss
 
 from models import build
@@ -261,6 +261,7 @@ def main(args):
             'accuracy': test_stats['accuracy'],
             'f1_micro': test_stats['f1_micro'],
             'auc_micro': test_stats['auc_micro'],
+            'auc_per_pathology':test_stats['auc_per_pathology'],
             'n_parameters': sum(p.numel() for p in model.parameters() if p.requires_grad),
             'evaluated_at': datetime.datetime.now().isoformat()
         }

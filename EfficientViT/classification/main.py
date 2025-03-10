@@ -26,7 +26,7 @@ from timm.utils import NativeScaler, get_state_dict, ModelEma
 from data.samplers import RASampler
 from data.datasets import build_dataset
 from data.threeaugment import new_data_aug_generator
-from engine import train_one_epoch, evaluate, load_custom_teacher_model
+from engine import train_one_epoch, evaluate
 from losses import DistillationLoss
 
 from models import build
@@ -261,7 +261,7 @@ def main(args):
             mixup_alpha=args.mixup, cutmix_alpha=args.cutmix, cutmix_minmax=args.cutmix_minmax,
             prob=args.mixup_prob, switch_prob=args.mixup_switch_prob, mode=args.mixup_mode,
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
-        
+
     print(f"Creating model: {args.model}")
     model = create_model(
         args.model,
@@ -280,7 +280,6 @@ def main(args):
 
         checkpoint_model = checkpoint['model']
         state_dict = model.state_dict()
-        
         for k in ['head.l.weight', 'head.l.bias',
                   'head_dist.l.weight', 'head_dist.l.bias']:
             if k in checkpoint_model and checkpoint_model[k].shape != state_dict[k].shape:
@@ -331,19 +330,24 @@ def main(args):
     else:
         criterion = torch.nn.CrossEntropyLoss()
     """
-
     teacher_model = None
     if args.distillation_type != 'none':
-        print(f"Creating teacher model using torchxrayvision: {args.teacher_model}")
-    
-    if args.teacher_model == 'densenet121':
-        teacher_model = load_custom_teacher_model(args.teacher_path)
-    else:
-        raise ValueError(f"Unsupported teacher model: {args.teacher_model} Supported teacher models are: densenet121")
-
-    teacher_model.to(device)
-    teacher_model.eval()
-
+        assert args.teacher_path, 'need to specify teacher-path when using distillation'
+        print(f"Creating teacher model: {args.teacher_model}")
+        teacher_model = create_model(
+            args.teacher_model,
+            pretrained=False,
+            num_classes=args.nb_classes,
+            global_pool='avg',
+        )
+        if args.teacher_path.startswith('https'):
+            checkpoint = torch.hub.load_state_dict_from_url(
+                args.teacher_path, map_location='cpu', check_hash=True)
+        else:
+            checkpoint = torch.load(args.teacher_path, map_location='cpu')
+        teacher_model.load_state_dict(checkpoint['model'])
+        teacher_model.to(device)
+        teacher_model.eval()
 
     # wrap the criterion in our custom DistillationLoss, which
     # just dispatches to the original criterion if args.distillation_type is
@@ -381,8 +385,7 @@ def main(args):
     if args.eval:
         # utils.replace_batchnorm(model) # Users may choose whether to merge Conv-BN layers during eval
         print(f"Evaluating model: {args.model}")
-        test_stats = evaluate(data_loader_val, model,device)
-        
+        test_stats = evaluate(data_loader_val, model, device)
         print(
             f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['accuracy']:.1f}%")
         return
@@ -406,7 +409,7 @@ def main(args):
 
         lr_scheduler.step(epoch)
 
-        test_stats = evaluate(data_loader_val, model,device)
+        test_stats = evaluate(data_loader_val, model, device)
         print(
             f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['accuracy']:.1f}%")
         
@@ -425,7 +428,7 @@ def main(args):
                         'scaler': loss_scaler.state_dict(),
                         'args': args,
                     }, checkpoint_path)
-        
+
         max_accuracy = max(max_accuracy, test_stats["accuracy"])
         print(f'Max accuracy: {max_accuracy:.2f}%')
         
