@@ -177,6 +177,32 @@ def evaluate(data_loader, model, device):
     
     f1_micro = f1_score(all_targets, (all_preds > 0.5).astype(int), average='micro')
     auc_micro = roc_auc_score(all_targets, all_preds, average='micro')
+    
+    pathology_names = [
+        "No Finding",
+        "Enlarged Cardiomediastinum",
+        "Cardiomegaly",
+        "Lung Opacity",
+        "Lung Lesion",
+        "Edema",
+        "Consolidation",
+        "Pneumonia",
+        "Atelectasis",
+        "Pneumothorax",
+        "Pleural Effusion",
+        "Pleural Other",
+        "Fracture",
+        "Support Devices"
+    ]
+    
+    num_labels = all_targets.shape[1]
+    auc_per_label = {}
+    for i in range(num_labels):
+        try:
+            auc_value = roc_auc_score(all_targets[:, i], all_preds[:, i])
+        except ValueError:
+            auc_value = float('nan')
+        auc_per_label[pathology_names[i]] = auc_value
 
     metric_logger.synchronize_between_processes()
     print('* Accuracy: {acc:.3f} loss: {loss:.3f} f1_micro: {f1:.3f} auc_micro: {auc:.3f}'
@@ -184,8 +210,14 @@ def evaluate(data_loader, model, device):
                   loss=metric_logger.loss.global_avg,
                   f1=f1_micro,
                   auc=auc_micro))
-
+    
+    print("Per-label AUC:")
+    for pathology, auc in auc_per_label.items():
+        print("{}: {:.3f}".format(pathology, auc))
+        
     metrics = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
     metrics['f1_micro'] = f1_micro
     metrics['auc_micro'] = auc_micro
+    metrics['auc_per_label'] = auc_per_label
     return metrics
+    
