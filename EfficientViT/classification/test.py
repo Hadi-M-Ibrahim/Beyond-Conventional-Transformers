@@ -62,7 +62,7 @@ class CheXpertDataset(torch.utils.data.Dataset):
                 label = []
                 for x in parts[1:15]:
                     if x == '-1.0':
-                        label.append(1.0)
+                        label.append(0.0)
                     elif x == '':
                         label.append(0.0)
                     else:
@@ -217,6 +217,7 @@ def main(args):
             'accuracy': test_stats['accuracy'],
             'f1_micro': test_stats['f1_micro'],
             'auc_micro': test_stats['auc_micro'],
+            'auc_per_label': test_stats['auc_per_label'],
             'n_parameters': sum(p.numel() for p in model.parameters() if p.requires_grad),
             'evaluated_at': datetime.datetime.now().isoformat()
         }
