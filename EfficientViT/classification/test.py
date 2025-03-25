@@ -261,6 +261,7 @@ def main(args):
             'accuracy': test_stats['accuracy'],
             'f1_micro': test_stats['f1_micro'],
             'auc_micro': test_stats['auc_micro'],
+            'auc_per_label': test_stats['auc_per_label'],
             'n_parameters': sum(p.numel() for p in model.parameters() if p.requires_grad),
             'evaluated_at': datetime.datetime.now().isoformat()
         }
