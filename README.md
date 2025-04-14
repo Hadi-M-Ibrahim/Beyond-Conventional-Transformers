@@ -12,7 +12,7 @@ This repository contains the implementation of the Medical X-ray Attention (MXA)
 - **Multi-label Classification**: Designed for handling multiple co-occurring pathologies in chest X-rays.
 - **CheXpert Dataset Integration**: Preprocessing, training, and evaluation pipelines for the CheXpert dataset.
 
-## Acknowledgments
+## Acknowledgments of Implementation
 This repository is a fork of the Cream repository by Microsoft Research, with significant modifications for multi-label classification and medical imaging tasks. We also acknowledge the contributions of the CheXpert dataset team and the TorchXRayVision library.
 
 ## Citation
