@@ -46,5 +46,6 @@ yacs==0.1.8
 torchxrayvision
 --index-url https://download.pytorch.org/whl/cu121
 --extra-index-url https://pypi.org/simple
+scikit-learn
 torch==2.2.2
 torchvision==0.17.2
