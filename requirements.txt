@@ -48,3 +48,4 @@ torchxrayvision
 --extra-index-url https://pypi.org/simple
 torch==2.2.2
 torchvision==0.17.2
+scikit-learn
