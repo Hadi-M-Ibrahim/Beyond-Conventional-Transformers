@@ -1,7 +1,4 @@
-# Beyond Conventional Transformers's Supplemental Materials
-
-## Summary of Included Materials
-Thank you for taking the time to review our paper. This repository contains the code, results, and a link to selected model checkpoints (see links) for the paper "Beyond Conventional Transformers: The Medical X-ray Attention (MXA) Block for Improved Multi-Label Diagnosis Using Knowledge Distillation". The code is organized into two branches: `Improved Branch` and `Naive Branch`. The `Improved Branch` includes the implementation of the proposed Multi-Attention Mechanism (MXA) and Knowledge Distillation (KD) techniques along with the modfied augmentations, while the `Naive Branch` contains the original multi label EfficientViT model without these enhancements.
+# Beyond Conventional Transformers
 
 ## Directory Structure
 
