@@ -3,7 +3,7 @@
 ## Directory Structure
 
 ```
-SupplementalMaterials/
+Beyond-Conventional-Transformers/
 ├── CODE_OF_CONDUCT.md
 ├── LICENSE
 ├── README.md (You are here)
