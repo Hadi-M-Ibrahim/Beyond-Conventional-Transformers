@@ -1,30 +1,148 @@
-# Beyond Conventional Transformers: The Medical X-ray Attention (MXA) Block for Improved Multi-Label Diagnosis Using Knowledge Distillation
+# Beyond Conventional Transformers's Supplemental Materials
 
-## Overview
+## Summary of Included Materials
+Thank you for taking the time to review our paper. This repository contains the code, results, and a link to selected model checkpoints (see links) for the paper "Beyond Conventional Transformers: The Medical X-ray Attention (MXA) Block for Improved Multi-Label Diagnosis Using Knowledge Distillation". The code is organized into two branches: `Improved Branch` and `Naive Branch`. The `Improved Branch` includes the implementation of the proposed Multi-Attention Mechanism (MXA) and Knowledge Distillation (KD) techniques along with the modfied augmentations, while the `Naive Branch` contains the original multi label EfficientViT model without these enhancements.
 
-This repository contains the implementation of the Medical X-ray Attention (MXA) block and its integration into Efficient Vision Transformers (EfficientViTs) for multi-label chest X-ray classification. The work is based on the paper **"Beyond Conventional Transformers: The Medical X-ray Attention (MXA) Block for Improved Multi-Label Diagnosis Using Knowledge Distillation"** by Hadi Ibrahim and Amit Rand. The repository includes the code for training, evaluation, and visualization of results on the CheXpert dataset.
+## Directory Structure
 
-## Features
+```
+SupplementalMaterials/
+├── CODE_OF_CONDUCT.md
+├── LICENSE
+├── README.md (You are here)
+├── ImprovedBranch/
+│   ├── requirements.txt (Pip install this to run the code; see instructions below)
+│   ├── EfficientViT/
+│   │   ├── engine.py (Look here for the training loop)
+│   │   ├── losses.py (Look here for KD functionality)
+│   │   ├── main.py (Run this to train the model; see instructions below)
+│   │   ├── attention_map_visualizer.py (Run this to recreate attention maps; see instructions below)
+│   │   ├── MXA_visualizer.py (Run this to recreate ROI visualization; see instructions below)
+│   │   ├── test.py (Run this to eval model checkpoints on test set [see links]; see instructions below)
+│   │   ├── utils.py
+│   │   ├── data/
+│   │   │   ├── __init__.py
+│   │   │   ├── datasets.py (Look here for the dataset class and data augmentations)
+│   │   │   ├── samplers.py
+│   │   │   ├── threeaugment.py
+│   │   ├── models/
+│   │       ├── __init__.py
+│   │       ├── build.py (Look here for model variants)
+│   │       ├── efficientvit.py (Look here for the model architecture w/ the MXA)
+├── NaiveBranch/
+│   ├── requirements.txt (Pip install this to run the code; see instructions below)
+│   ├── EfficientViT/
+│   │   ├── engine.py (Look here for the training loop)
+│   │   ├── losses.py (Look here for KD functionality)
+│   │   ├── main.py (Run this to train the model; see instructions below)
+│   │   ├── test.py (Run this to eval model checkpoints on test set [see links]; see instructions below)
+│   │   ├── utils.py
+│   │   ├── data/
+│   │   │   ├── __init__.py
+│   │   │   ├── datasets.py (Look here for the dataset class and data augmentations)
+│   │   │   ├── samplers.py
+│   │   │   ├── threeaugment.py
+│   │   ├── model/
+│   │       ├── __init__.py
+│   │       ├── build.py (Look here for model variants)
+│   │       ├── efficientvit.py (Look here for the model architecture w/o the MXA)
+├── Results/
+│   ├── ablation_study/
+│   │   ├── augs:u1/
+│   │   │   ├── args.txt (Look here for hyperparameters used for training)
+│   │   │   ├── log.txt (Look here for validation set logs)
+│   │   │   ├── model.txt (Look here for model spesfications)
+│   │   ├── augs:u1+MXA/
+│   │   │   ├── args.txt (Look here for hyperparameters used for training)
+│   │   │   ├── log.txt (Look here for validation set logs)
+│   │   │   ├── model.txt (Look here for model spesfications)
+│   │   ├── augs:u1+MXA+KD/
+│   │       ├── args.txt (Look here for hyperparameters used for training)
+│   │       ├── log.txt (Look here for validation set logs)
+│   │       ├── model.txt (Look here for model spesfications)
+│   ├── Improved/
+│   │   ├── TestSet/
+│   │   │   ├── Run0/
+│   │   │   │   ├── log.txt (Look here for test set logs)
+│   │   │   ├── Run1/
+│   │   │   │   ├── log.txt (Look here for test set logs)
+│   │   │   ├── Run2/
+│   │   │       ├── log.txt (Look here for test set logs)
+│   │   ├── ValSet/
+│   │       ├── args.txt (Look here for hyperparameters used for training)
+│   │       ├── log.txt (Look here for validation set logs)
+│   │       ├── model.txt (Look here for Model spesfications)
+│   ├── Naive/
+│       ├── TestSet/
+│       │   ├── Run0/
+│       │   │   ├── log.txt (Look here for test set logs)
+│       │   ├── Run1/
+│       │   │   ├── log.txt (Look here for test set logs)
+│       │   ├── Run2/
+│       │       ├── log.txt (Look here for test set logs)
+│       ├── ValSet/
+│           ├── args.txt (Look here for hyperparameters used for training)
+│           ├── log.txt (Look here for validation set logs)
+│           ├── model.txt (Look here for Model spesfications)
+```
+## Instructions (Linux Strongly Recomended)
+### ImprovedBranch
+1. **Install Requirements**: 
+   ```bash
+   pip install -r ./ImprovedBranch/requirements.txt
+   ```
+2. **main.py (train model)**: 
+   ```bash
+   cd ./ImprovedBranch/EfficientViT
+   ```
+   ```bash
+    python main.py --model EfficientViT_MultiLabel_M5 --data-set CHEXPERT --data-path "(directory of CheXpert folder)" --batch-size 512 --epochs 50 --output_dir "(select an output directory)" --device cuda --teacher-model densenet121 --distillation-type soft --num_workers "(start with # of cpu cores) or zero for windows not recommended"
+   ```
+3. **test.py (run test set)**: 
+   ```bash
+   cd ./ImprovedBranch/EfficientViT
+   ```
+   ```bash
+    python test.py --model EfficientViT_MultiLabel_M5 --data-path "(directory of CheXpert folder containg test.csv [see links])" --checkpoint-dir "(directory containing model checkpoints [see links])" --output-dir "(select an output directory)" --num-workers "(start with # of cpu cores) or zero for windows not recommended" 
+   ```
+4. **MXA_visualizer.py (recreate ROI visualization like in apendix F)**: 
+   ```bash
+    cd ./ImprovedBranch/EfficientViT
+    ```
+    ```bash
+      python MXA_visualizer.py -image-path "(path to CXR)" --output "(select an output dir)"
+    ```
+5. **attention_map_visualizer.py (recreate attention maps like in appendix G)**:
+   ```bash
+    cd ./ImprovedBranch/EfficientViT
+    ```
+    ```bash
+      python attention_map_visualizer.py --naive_checkpoint "(path to naive checkpoint [see links])" --improved_checkpoint"(path to improved checkpoint [see links]" --image_dir "(path to CXR)" --output_dir "(select an output dir)"
+    ```
 
-- **Medical X-ray Attention (MXA) Block**: A novel attention mechanism tailored for medical imaging, combining Dynamic Region-of-Interest (ROI) Pooling and CBAM-style attention to capture localized and global features.
-- **Efficient Vision Transformers (EfficientViTs)**: Adapted for multi-label classification with modifications to loss functions and architecture.
-- **Knowledge Distillation (KD)**: Leveraging DenseNet-121 as a teacher model to improve student model performance under data constraints.
-- **Multi-label Classification**: Designed for handling multiple co-occurring pathologies in chest X-rays.
-- **CheXpert Dataset Integration**: Preprocessing, training, and evaluation pipelines for the CheXpert dataset.
+### NaiveBranch
+1. **Install Requirements**: 
+   ```bash
+   pip install -r ./NaiveBranch/requirements.txt
+   ```
+2. **main.py (train model)**: 
+   ```bash
+   cd ./NaiveBranch/EfficientViT
+   ```
+   ```bash
+    python main.py --model EfficientViT_MultiLabel_M5 --data-set CHEXPERT  --data-path "(directory of CheXpert folder)" --batch-size 512 --epochs 50 --output_dir "(select an output directory)" --device cuda --distillation-type none --num_workers "(start with # of cpu cores) including windows"
+   ```
+3. **test.py (run test set)**: 
+   ```bash
+   cd ./NaiveBranch/EfficientViT
+   ```
+   ```bash
+    python test.py --model EfficientViT_MultiLabel_M5 --data-path "(directory of CheXpert folder containg test.csv [see links])" --checkpoint-dir "(directory containing model checkpoints [see links])" --output-dir"(select an output directory)" --num-workers "(start with # of cpu cores) including windows"
+   ```
 
-## Acknowledgments of Implementation
-This repository is a fork of the Cream repository by Microsoft Research, with significant modifications for multi-label classification and medical imaging tasks. We also acknowledge the contributions of the CheXpert dataset team and the TorchXRayVision library.
+## Links
 
-## Citation
-
-If our research was helpful to you, please cite the following paper [link](https://www.arxiv.org/abs/2504.02277):
-
-
-```bibtex
-@article{rand2025beyond,
-  title={Beyond Conventional Transformers: The Medical X-ray Attention (MXA) Block for Improved Multi-Label Diagnosis Using Knowledge Distillation},
-  author={Rand, Amit and Ibrahim, Hadi},
-  journal={arXiv preprint arXiv:2504.02277},
-  year={2025}
-}
-
+- **Selected Checkpoints**: *[https://drive.google.com/file/d/1g7EjpzGraGzJr0ewOV2nA-oPooix4wiS/view?usp=sharing](https://drive.google.com/file/d/1g7EjpzGraGzJr0ewOV2nA-oPooix4wiS/view?usp=sharing)*
+- **CheXpert Dataset**: *[https://stanfordmlgroup.github.io/competitions/chexpert/](https://stanfordmlgroup.github.io/competitions/chexpert/)*
+- **CheXpert Test Labels**: *[https://github.com/rajpurkarlab/cheXpert-test-set-labels](https://github.com/rajpurkarlab/cheXpert-test-set-labels)*
+- **Additional (& Most Up To Date) Supplemental Files**: *[https://drive.google.com/drive/folders/1AfXz9uF-PHm0HbwvoTSJufilwSdGOjof?usp=sharing](https://drive.google.com/drive/folders/1AfXz9uF-PHm0HbwvoTSJufilwSdGOjof?usp=sharing)*
