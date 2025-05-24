@@ -143,3 +143,20 @@ Beyond-Conventional-Transformers/
 - **CheXpert Dataset**: *[https://stanfordmlgroup.github.io/competitions/chexpert/](https://stanfordmlgroup.github.io/competitions/chexpert/)*
 - **CheXpert Test Labels**: *[https://github.com/rajpurkarlab/cheXpert-test-set-labels](https://github.com/rajpurkarlab/cheXpert-test-set-labels)*
 - **Additional (& Most Up To Date) Supplemental Files**: *[https://drive.google.com/drive/folders/1AfXz9uF-PHm0HbwvoTSJufilwSdGOjof?usp=sharing](https://drive.google.com/drive/folders/1AfXz9uF-PHm0HbwvoTSJufilwSdGOjof?usp=sharing)*
+
+## Acknowledgments of Implementation
+This repository is a fork of the Cream repository by Microsoft Research, with significant modifications for multi-label classification and medical imaging tasks. We also acknowledge the contributions of the CheXpert dataset team and the TorchXRayVision library.
+
+## Citation
+
+If our research was helpful to you, please cite the following paper [https://www.arxiv.org/abs/2504.02277](https://www.arxiv.org/abs/2504.02277):
+
+
+```bibtex
+@article{rand2025beyond,
+  title={Beyond Conventional Transformers: The Medical X-ray Attention (MXA) Block for Improved Multi-Label Diagnosis Using Knowledge Distillation},
+  author={Rand, Amit and Ibrahim, Hadi},
+  journal={arXiv preprint arXiv:2504.02277},
+  year={2025}
+}
+
