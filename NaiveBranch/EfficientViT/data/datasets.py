@@ -1,6 +1,7 @@
 '''
 Build trainining/testing datasets
 '''
+import csv
 import os
 import json
 
@@ -72,6 +73,7 @@ class CheXpertDataset(torch.utils.data.Dataset):
         self.transform = transform
         self.train = train
         self.samples = []
+        self.nb_classes = 14
 
         csv_file = 'train.csv' if train else 'valid.csv'
         csv_path = os.path.join(root, csv_file)
@@ -107,6 +109,113 @@ class CheXpertDataset(torch.utils.data.Dataset):
             image = self.transform(image)
 
         return image, label
+
+
+class NIHChestXrayDataset(torch.utils.data.Dataset):
+    LABELS = [
+        'Atelectasis',
+        'Cardiomegaly',
+        'Effusion',
+        'Infiltration',
+        'Mass',
+        'Nodule',
+        'Pneumonia',
+        'Pneumothorax',
+        'Consolidation',
+        'Edema',
+        'Emphysema',
+        'Fibrosis',
+        'Pleural_Thickening',
+        'Hernia',
+    ]
+
+    def __init__(self, root, train=True, transform=None,
+                 csv_filename='Data_Entry_2017.csv'):
+        self.root = root
+        self.transform = transform
+        self.train = train
+        self.csv_path = os.path.join(root, csv_filename)
+        if not os.path.exists(self.csv_path):
+            raise FileNotFoundError(f'NIH metadata not found: {self.csv_path}')
+
+        self.label_to_index = {label: idx for idx, label in enumerate(self.LABELS)}
+        self.image_map = self._index_images(root)
+        self.samples = self._load_samples()
+        self.nb_classes = len(self.LABELS)
+
+    def _index_images(self, root):
+        image_map = {}
+        image_dirs = []
+        for entry in sorted(os.listdir(root)):
+            candidate = os.path.join(root, entry)
+            if entry.startswith('images_') and os.path.isdir(candidate):
+                nested = os.path.join(candidate, 'images')
+                image_dirs.append(nested if os.path.isdir(nested) else candidate)
+        if not image_dirs:
+            fallback = os.path.join(root, 'images')
+            if os.path.isdir(fallback):
+                image_dirs.append(fallback)
+        if not image_dirs:
+            raise FileNotFoundError(f'No NIH image folders found under: {root}')
+
+        # Pre-indexing avoids repeated directory scans when fetching samples.
+        for directory in image_dirs:
+            for filename in os.listdir(directory):
+                lower = filename.lower()
+                if lower.endswith('.png') or lower.endswith('.jpg') or lower.endswith('.jpeg'):
+                    image_map[filename] = os.path.join(directory, filename)
+
+        if not image_map:
+            raise FileNotFoundError(f'No NIH images found after scanning: {image_dirs}')
+
+        return image_map
+
+    def _load_samples(self):
+        samples = []
+        with open(self.csv_path, 'r') as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                image_name = row['Image Index']
+                patient_id = row.get('Patient ID')
+                if not patient_id:
+                    continue
+                try:
+                    patient_id = int(patient_id)
+                except ValueError:
+                    continue
+
+                is_train_sample = (patient_id % 5) != 0
+                if self.train != is_train_sample:
+                    continue
+
+                image_path = self.image_map.get(image_name)
+                if image_path is None:
+                    raise FileNotFoundError(f'NIH image missing for index: {image_name}')
+
+                labels = torch.zeros(len(self.LABELS), dtype=torch.float32)
+                for label in row['Finding Labels'].split('|'):
+                    label = label.strip()
+                    if not label or label == 'No Finding':
+                        continue
+                    idx = self.label_to_index.get(label)
+                    if idx is not None:
+                        labels[idx] = 1.0
+                samples.append((image_path, labels))
+
+        if not samples:
+            raise ValueError('NIH dataset split produced no samples. Check data path and split logic.')
+
+        return samples
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        image_path, labels = self.samples[idx]
+        image = default_loader(image_path)
+        if self.transform:
+            image = self.transform(image)
+        return image, labels
 
 
 def build_dataset(is_train, args):
@@ -146,8 +255,14 @@ def build_dataset(is_train, args):
         nb_classes = dataset.nb_classes
     elif args.data_set == 'CHEXPERT':
         dataset = CheXpertDataset(root=args.data_path,
-                                  train=is_train,transform=transform)
-    nb_classes = 14
+                                  train=is_train, transform=transform)
+        nb_classes = dataset.nb_classes
+    elif args.data_set == 'NIH':
+        dataset = NIHChestXrayDataset(root=args.data_path,
+                                      train=is_train, transform=transform)
+        nb_classes = dataset.nb_classes
+    else:
+        raise ValueError(f'Unsupported dataset: {args.data_set}')
     return dataset, nb_classes
 
 

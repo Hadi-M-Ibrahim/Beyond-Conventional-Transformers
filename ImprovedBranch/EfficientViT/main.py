@@ -156,7 +156,7 @@ def get_args_parser():
     # Dataset parameters
     parser.add_argument('--data-path', default='/root/FastBaseline/data/imagenet', type=str,
                         help='dataset path')
-    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'IMNET', 'INAT', 'INAT19', 'CHEXPERT'],
+    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'IMNET', 'INAT', 'INAT19', 'CHEXPERT', 'NIH'],
                         type=str, help='Image Net dataset path')
     parser.add_argument('--inat-category', default='name',
                         choices=['kingdom', 'phylum', 'class', 'order',
@@ -337,7 +337,7 @@ def main(args):
         print(f"Creating teacher model using torchxrayvision: {args.teacher_model}")
     
         if args.teacher_model == 'densenet121':
-            teacher_model = load_custom_teacher_model(args.teacher_path)
+            teacher_model = load_custom_teacher_model(args.teacher_path, args.data_set)
         else:
             raise ValueError(f"Unsupported teacher model: {args.teacher_model} Supported teacher models are: densenet121")
     

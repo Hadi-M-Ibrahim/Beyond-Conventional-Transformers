@@ -21,59 +21,91 @@ import torchxrayvision as xrv
 
 import torchvision.transforms.functional as TF
 
-import numpy as np 
+import numpy as np
+
+from data.datasets import NIHChestXrayDataset
 
 class TeacherOutputAdapter(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, teacher_indices, num_classes, compute_no_finding=False, zero_indices=None):
         super().__init__()
-        # (student index : teacher index)
-        self.mapping = {
-            1: 17,  # Enlarged Cardiomediastinum
-            2: 10,  # Cardiomegaly
-            3: 16,  # Lung Opacity
-            4: 14,  # Lung Lesion
-            5: 4,   # Edema
-            6: 1,   # Consolidation
-            7: 8,   # Pneumonia
-            8: 0,   # Atelectasis
-            9: 3,   # Pneumothorax
-            10: 7,  # Pleural Effusion
-            11: 9,  # Pleural Other
-            12: 15, # Fracture
-        }
-    
+        self.teacher_indices = teacher_indices
+        self.num_classes = num_classes
+        self.compute_no_finding = compute_no_finding
+        self.zero_indices = set(zero_indices or [])
+
     def forward(self, teacher_logits):
-        """
-        teacher_logits: Tensor of shape (batch_size, 18)
-        Returns:
-            mapped_logits: Tensor of shape (batch_size, 14) with desired ordering:
-            [No Finding, Enlarged Cardiomediastinum, Cardiomegaly, Lung Opacity, Lung Lesion,
-             Edema, Consolidation, Pneumonia, Atelectasis, Pneumothorax, Pleural Effusion,
-             Pleural Other, Fracture, Support Devices]
-        """
         batch_size = teacher_logits.shape[0]
-        mapped = torch.zeros((batch_size, 14), device=teacher_logits.device)
-        
-        # Compute "No Finding"
-        no_finding = torch.prod(1 - torch.sigmoid(teacher_logits), dim=1)
-        mapped[:, 0] = no_finding
-        
-        for student_idx, teacher_idx in self. mapping.items():
-            mapped[:, student_idx] = teacher_logits[:, teacher_idx]
-        
-        # "Support Devices" set to 0
-        mapped[:, 13] = 0.0
-        
+        mapped = torch.zeros((batch_size, self.num_classes), device=teacher_logits.device)
+
+        if self.compute_no_finding:
+            mapped[:, 0] = torch.prod(1 - torch.sigmoid(teacher_logits), dim=1)
+
+        for target_idx, teacher_idx in enumerate(self.teacher_indices):
+            if teacher_idx is None:
+                continue
+            mapped[:, target_idx] = teacher_logits[:, teacher_idx]
+
+        for idx in self.zero_indices:
+            mapped[:, idx] = 0.0
+
         return mapped
-        
-def load_custom_teacher_model(teacher_path):
+
+
+def _build_teacher_indices_for_labels(labels):
+    default_pathologies = xrv.datasets.default_pathologies
+    teacher_indices = []
+    for label in labels:
+        name_candidates = [label, label.replace('_', ' ')]
+        teacher_idx = None
+        for candidate in name_candidates:
+            if candidate in default_pathologies:
+                teacher_idx = default_pathologies.index(candidate)
+                break
+        if teacher_idx is None:
+            raise ValueError(f"Teacher model does not provide logits for label '{label}'.")
+        teacher_indices.append(teacher_idx)
+    return teacher_indices
+
+
+def load_custom_teacher_model(teacher_path, data_set):
     teacher_model = xrv.models.DenseNet(weights="densenet121-res224-chex")
-    teacher_model.eval()  # Ensure the teacher is in eval mode.
-    
-    # Wrap the teacher model with the adapter that maps its output to 14 classes.
-    adapter = TeacherOutputAdapter()
+    teacher_model.eval()
+
+    if data_set == 'CHEXPERT':
+        chex_teacher_indices = [
+            None,  # No Finding handled separately
+            17,    # Enlarged Cardiomediastinum
+            10,    # Cardiomegaly
+            16,    # Lung Opacity
+            14,    # Lung Lesion
+            4,     # Edema
+            1,     # Consolidation
+            8,     # Pneumonia
+            0,     # Atelectasis
+            3,     # Pneumothorax
+            7,     # Pleural Effusion (mapped from Effusion)
+            9,     # Pleural Other (approx. Pleural Thickening)
+            15,    # Fracture
+            None,  # Support Devices (not provided by teacher)
+        ]
+        adapter = TeacherOutputAdapter(
+            teacher_indices=chex_teacher_indices,
+            num_classes=len(chex_teacher_indices),
+            compute_no_finding=True,
+            zero_indices={13},
+        )
+    elif data_set == 'NIH':
+        nih_labels = NIHChestXrayDataset.LABELS
+        nih_teacher_indices = _build_teacher_indices_for_labels(nih_labels)
+        adapter = TeacherOutputAdapter(
+            teacher_indices=nih_teacher_indices,
+            num_classes=len(nih_teacher_indices),
+            compute_no_finding=False,
+        )
+    else:
+        raise ValueError(f"Unsupported dataset for teacher adapter: {data_set}")
+
     teacher_model = torch.nn.Sequential(teacher_model, adapter)
-    
     return teacher_model
 
 
@@ -178,23 +210,29 @@ def evaluate(data_loader, model, device):
     f1_micro = f1_score(all_targets, (all_preds > 0.5).astype(int), average='micro')
     auc_micro = roc_auc_score(all_targets, all_preds, average='micro')
     
-    pathology_names = [
-        "No Finding",
-        "Enlarged Cardiomediastinum",
-        "Cardiomegaly",
-        "Lung Opacity",
-        "Lung Lesion",
-        "Edema",
-        "Consolidation",
-        "Pneumonia",
-        "Atelectasis",
-        "Pneumothorax",
-        "Pleural Effusion",
-        "Pleural Other",
-        "Fracture",
-        "Support Devices"
-    ]
-    
+    dataset = data_loader.dataset
+    if hasattr(dataset, 'class_names'):
+        pathology_names = list(dataset.class_names)
+    elif hasattr(dataset, 'LABELS'):
+        pathology_names = list(dataset.LABELS)
+    else:
+        pathology_names = [
+            "No Finding",
+            "Enlarged Cardiomediastinum",
+            "Cardiomegaly",
+            "Lung Opacity",
+            "Lung Lesion",
+            "Edema",
+            "Consolidation",
+            "Pneumonia",
+            "Atelectasis",
+            "Pneumothorax",
+            "Pleural Effusion",
+            "Pleural Other",
+            "Fracture",
+            "Support Devices",
+        ]
+
     num_labels = all_targets.shape[1]
     auc_per_label = {}
     for i in range(num_labels):
