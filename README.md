@@ -146,17 +146,3 @@ Beyond-Conventional-Transformers/
 
 ## Acknowledgments of Implementation
 This repository is a fork of the Cream repository by Microsoft Research, with significant modifications for multi-label classification and medical imaging tasks. We also acknowledge the contributions of the CheXpert dataset team and the TorchXRayVision library.
-
-## Citation
-
-If our research was helpful to you, please cite the following paper [https://www.arxiv.org/abs/2504.02277](https://www.arxiv.org/abs/2504.02277):
-
-
-```bibtex
-@article{rand2025beyond,
-  title={Beyond Conventional Transformers: The Medical X-ray Attention (MXA) Block for Improved Multi-Label Diagnosis Using Knowledge Distillation},
-  author={Rand, Amit and Ibrahim, Hadi},
-  journal={arXiv preprint arXiv:2504.02277},
-  year={2025}
-}
-
